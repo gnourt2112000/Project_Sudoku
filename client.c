@@ -1,10 +1,3 @@
-/*
-Written by NoHope Team
-Members:
------Vu Duc Nguyen-----(L)
------Nguyen Viet Hung-----
------Phung Thi Trang------
-*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
