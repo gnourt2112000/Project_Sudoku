@@ -4,11 +4,11 @@ LIBS =  -lm
 
 all: client server
 
-client: client.c clientHelper.c ranking.c checkinput.c
+client: client.c clientHelper.c ranking.c checkinput.c 
 	${CC} client.c clientHelper.c ranking.c checkinput.c -o client
 
-server: server.c serverHelper.c checkinput.c linklist.c ranking.c
-	${CC} server.c serverHelper.c checkinput.c linklist.c ranking.c -o server
+server: server.c serverHelper.c checkinput.c linklist.c ranking.c solvesudoku.c
+ 	${CC} server.c serverHelper.c checkinput.c linklist.c ranking.c solvesudoku.c -o server
 
 clean:
 	rm -f *.o *~
