@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
-#include "linklist.h"
+#include "clientlist.h"
 
 void getTime(char* str){
   struct tm* now = NULL;

@@ -4,11 +4,10 @@ LIBS =  -lm
 
 all: client server
 
-client: client.c clientHelper.c ranking.c checkinput.c 
-	${CC} client.c clientHelper.c ranking.c checkinput.c -o client
-
-server: server.c serverHelper.c checkinput.c linklist.c ranking.c solvesudoku.c
- 	${CC} server.c serverHelper.c checkinput.c linklist.c ranking.c solvesudoku.c -o server
+client: client.c lib/log.c lib/authenticate.c lib/terminal.c lib/ranking.c
+	${CC} client.c lib/log.c lib/authenticate.c lib/terminal.c lib/ranking.c -o client
+server: server.c lib/log.c lib/authenticate.c lib/terminal.c lib/clientlist.c lib/ranking.c lib/solvesudoku.c
+ 	${CC} server.c lib/log.c lib/authenticate.c lib/terminal.c lib/clientlist.c lib/ranking.c lib/solvesudoku.c -o server
 
 clean:
 	rm -f *.o *~

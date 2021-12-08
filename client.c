@@ -19,10 +19,11 @@ https://www.daemon-systems.org/man/tcgetattr.3.html
 #include <signal.h>
 #include <errno.h>
 
-#include "linklist.h"
-#include "checkinput.h"
-#include "ranking.h"
-#include "clientHelper.h"
+#include "lib/clientlist.h"
+#include "lib/ranking.h"
+#include "lib/log.h"
+#include "lib/authenticate.h"
+#include "lib/terminal.h"
 
 #define BUFF_SIZE 1024
 int VIEWSIZE = 9;
@@ -48,10 +49,10 @@ int VIEWSIZE = 9;
 #define SIGNAL_CHECK_FALSE "SIGNAL_CHECK_FALSE"
 #define SIGNAL_CHECK_TRUE "SIGNAL_CHECK_TRUE"
 // show info
-#define INFO_QUIT "Quit caro game (y or n)?"
+#define INFO_QUIT "Quit game (y or n)?"
 #define INFO_WIN "You Win. Do you want to view log (y or n)?"
 
-// caro ranking
+// ranking
 #define SIGNAL_RANKING "SIGNAL_RANKING"
 
 // client connect to server
@@ -132,9 +133,10 @@ int menuSignin(){
   char pass[100], *str;
   while(1){
     clearScreen();
-    printf("----------HARDGAME----------\n");
-    printf("\tSign in\n");
-    printf("---------------------------\n");
+    printf("\t ____________________________\n");
+    printf("\t|----------HARDGAME----------|\n");
+    printf("\t|          Sign in           |\n");
+    printf("\t|____________________________|\n");
     if(error[0] != '\0'){
       printf("Error: %s!\n", error);
       printf("Do you want to try again?(y or n): ");
@@ -152,11 +154,11 @@ int menuSignin(){
       	continue;
       }
     }
-    printf("Username: ");
+    printf("\tUsername: ");
     fgets(user, BUFF_SIZE, stdin);
     user[strlen(user)-1] = '\0';
 
-    printf("Password: ");
+    printf("\tPassword: ");
     getPassword(pass);
 
     //check username and password
@@ -189,9 +191,10 @@ int menuRegister(){
   char pass[100], comfirmPass[100], *str;
   while(1){
     clearScreen();
-    printf("----------HARDGAME----------\n");
-    printf("\tRegister\n");
-    printf("---------------------------\n");
+    printf("\t ____________________________\n");
+    printf("\t|----------HARDGAME----------|\n");
+    printf("\t|          Register          |\n");
+    printf("\t|____________________________|\n");
     if(error[0] != '\0'){
       printf("Error: %s!\n", error);
       printf("Do you want to try again?(y or n): ");
@@ -208,13 +211,13 @@ int menuRegister(){
       	continue;
       }
     }
-    printf("Username: ");
+    printf("\tUsername: ");
     fgets(user, BUFF_SIZE, stdin);
     user[strlen(user)-1] = '\0';
 
-    printf("Password: ");
+    printf("\tPassword: ");
     getPassword(pass);
-    printf("\nConfirm password: ");
+    printf("\n\tConfirm password: ");
     getPassword(comfirmPass);
     if(strcmp(pass, comfirmPass) == 0){
       // register new account
@@ -252,12 +255,13 @@ int menuStart(){
       printf("Error: %s!\n", error );
       error[0] = '\0';
     }
-    printf("----------HARDGAME----------\n");
-    printf("\t1.Sign in\n");
-    printf("\t2.Register\n");
-    printf("\t3.Exit\n");
-    printf("---------------------------\n");
-    printf("Your choice: ");
+    printf("\t ____________________________\n");
+    printf("\t|----------HARDGAME----------|\n");
+    printf("\t|  1.Sign in                 |\n");
+    printf("\t|  2.Register                |\n");
+    printf("\t|  3.Exit                    |\n");
+    printf("\t|____________________________|\n");
+    printf("\tYour choice: ");
     scanf("%c", &choice);
     while(getchar() != '\n');
     if(choice == '1'){
@@ -282,17 +286,18 @@ int menuStart(){
 }
 
 /*
-Hiển thị phần game caro, chọn size để chơi
+Hiển thị phần game 
 */
 int menuGame(){
   error[0] = '\0';
   char* str;
   while(1){
     clearScreen();
-    printf("----------HARDGAME----------\n");
+    printf("\t____________________________\n");
+    printf("\t----------HARDGAME----------\n");
     printf("\033[0;33m\tUsername: %s \033[0;37m\n", user);
     printf("\tNEW GAME\n");
-    printf("---------------------------\n");
+    printf("\t---------------------------\n");
     if(error[0] != '\0'){
       printf("Error: %s!\n", error);
       printf("Do you want to try again? (y or n): ");
@@ -398,13 +403,14 @@ int menuHardGame(){
       printf("Error: %s!\n", error);
       error[0] = '\0';
     }
-    printf("----------FUNGAME----------\n");
-    printf("\033[0;33m\tWelcome %s \033[0;37m\n", user);
-    printf("\t1.Sudoku game\n");
-    printf("\t2.Sudoku ranking\n");
-    printf("\t3.Sign out\n");
-    printf("---------------------------\n");
-    printf("Your choice: ");
+    printf("\t ______________________________\n");
+    printf("\t|----------HARDGAME------------|\n");
+    printf("\t|\033[0;33m\tWelcome %s \033[0;37m        |\n", user);
+    printf("\t|1.Sudoku game                 |\n");
+    printf("\t|2.Sudoku ranking              |\n");
+    printf("\t|3.Sign out                    |\n");
+    printf("\t|______________________________|\n");
+    printf("\tYour choice: ");
     scanf("%c", &choice);
     while(getchar() != '\n');
     if(choice == '1'){
@@ -481,7 +487,7 @@ int viewLog(){
 }
 
 /*
-Vẽ bảng chơi caro
+Vẽ bảng chơi 
 */
 void drawTable(){
   int i, j, k;
@@ -520,7 +526,7 @@ int handleGame(){
   row = size / 2;
   while(1){
     clearScreen();
-    printf("\033[0;37m----------CARO GAME----------\n");
+    printf("\033[0;37m----------SUDOKU GAME----------\n");
     printf("\033[0;33m\tUsername: %s - GameID = %s\033[0;37m\n", user, id);
     printf("\tPress w,a,s,d to move \n");
     printf("\tPress 1 -> 9 to fill\n");
@@ -675,14 +681,6 @@ int main(int argc, char* argv[]){
   if(argc != 3){
     printf("Syntax Error.\n");
     printf("Syntax: ./client IPAddress PortNumber\n");
-    return 0;
-  }
-  if(check_IP(argv[1]) == 0){
-    printf("IP address invalid\n");
-    return 0;
-  }
-  if(check_port(argv[2]) == 0){
-    printf("Port invalid\n");
     return 0;
   }
   serverAddress = argv[1];

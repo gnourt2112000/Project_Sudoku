@@ -13,16 +13,15 @@ Library of socket
 #include <unistd.h>
 #include <errno.h>
 
-#include "linklist.h"
-#include "solvesudoku.h"
-#include "checkinput.h"
-// #include "tictactoeRanking.h"
-#include "ranking.h"
-#include "serverHelper.h"
+#include "lib/clientlist.h"
+#include "lib/solvesudoku.h"
+#include "lib/ranking.h"
+#include "lib/log.h"
+#include "lib/authenticate.h"
 
 #define BUFF_SIZE 1024
 
-// fungame
+// Auth
 #define SIGNAL_CHECKLOGIN "SIGNAL_CHECKLOGIN"
 #define SIGNAL_CREATEUSER "SIGNAL_CREATEUSER"
 #define SIGNAL_OK "SIGNAL_OK"
@@ -116,7 +115,7 @@ void initSudoku(){
 /*
 Xử lí dữ liệu gửi từ client
 */
-int handleDataFromClient(int fd){
+int handleFromClient(int fd){
   char *user, *pass, *id;
   int recieved, col, row, userVal;
   ClientInfo *info;
@@ -201,7 +200,7 @@ int handleDataFromClient(int fd){
     info = getInfo(id);
     if(info != NULL){
       // write log
-      writeLog(info->logfile, col, row, 1);
+      writeLog(info->logfile, col, row);
       // player win
       int i,j;
       count = 1;
@@ -293,12 +292,6 @@ int main(int argc, char *argv[]){
     printf("Syntax: ./server PortNumber\n");
     return 0;
   }
-  if(check_port(argv[1]) == 0){
-    printf("Port invalid\n");
-    return 0;
-  }
-
-
   PORT = atoi(argv[1]);
 
   int sock, connected, sin_size, true1 = 1;
@@ -372,11 +365,11 @@ int main(int argc, char *argv[]){
             if(connected > fdmax)
               fdmax = connected;
             printf("Got a connection from (%s , %d) with fd = %d\n", inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port), connected);
-            handleDataFromClient(connected);
+            handleFromClient(connected);
           }
         }
         else{
-          handleDataFromClient(i);
+          handleFromClient(i);
         }
       }
     }
