@@ -52,7 +52,7 @@ void to_free(node* rootRank){ // giai phong list
 
 void readFileRanking(){
   FILE *f;
-  f = fopen("ranking.txt", "r");
+  f = fopen("data/ranking.txt", "r");
   if(f==NULL){// check file
     printf("Cannot open file ranking.txt!!!\n");
     return;
@@ -66,7 +66,7 @@ void readFileRanking(){
 }
 
 void updateFileRanking(){
-  FILE *f = fopen("ranking.txt", "w");
+  FILE *f = fopen("data/ranking.txt", "w");
   node* p;
   for ( p = rootRank; p!= NULL; p = p->next ){
       fprintf(f, "%s %d %d\n", p->user.username, p->user.numberOfWin, p->user.point);

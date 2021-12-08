@@ -14,7 +14,7 @@ int getPassword(char pass[]){
     i++;
   pass[i] = '\0';
   setDefaultTerminal();
-  return i;  
+  return i;
 }
 
 /*
@@ -22,13 +22,13 @@ Kiểm tra username, password
 Output: 1 - user, pass hợp lệ; 0 - không hợp lệ
 */
 int isValid(char* username, char* password){
-  FILE* f = fopen("user.txt", "r+");
+  FILE* f = fopen("data/user.txt", "r+");
   if(f == NULL ){
     printf("Error open file!!!\n");
     return 0;
   }
   char line[100];
-  char* temp;  
+  char* temp;
   if( password != NULL){
     while(fgets( line, 100, f) != NULL){
       temp = line;
@@ -47,7 +47,7 @@ int isValid(char* username, char* password){
     while(fgets(line, 100, f) != NULL){
       temp = line;
       while(temp[0] != '#') temp++;
-      temp[0] = '\0';      
+      temp[0] = '\0';
       if(strcmp(line, username) == 0){
       	fclose(f);
       	return 1;
@@ -55,14 +55,14 @@ int isValid(char* username, char* password){
     }
     fclose(f);
     return 0;
-  }  
+  }
 }
 
 /*
 Đăng kí user mới
 */
 void registerUser(char* username, char* password){
-  FILE* f = fopen("user.txt", "a");
+  FILE* f = fopen("data/user.txt", "a");
   fprintf(f, "%s#%s\n", username, password);
   fclose(f);
 }

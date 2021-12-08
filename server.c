@@ -93,7 +93,7 @@ void updateRanking( char* user, int result){
 
 void initSudoku(){
   Sudoku sudoku[100];
-  FILE *f = fopen("sudokuData.txt","r");
+  FILE *f = fopen("data/sudokuData.txt","r");
   int total_data = 0;
   while(!feof(f)){
       fscanf(f,"%s",sudoku[total_data].data);
