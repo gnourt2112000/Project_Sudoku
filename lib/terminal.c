@@ -11,7 +11,7 @@ int res;
 char error[100];
 
 // Nhập từ bàn phím không yêu cầu enter để tiếp tục.
-void setCustomTerminal(){
+void setPrivateTerminal(){
   res = 0;
   //store old setttings
   res = tcgetattr(STDIN_FILENO, &org_opts);
@@ -23,7 +23,7 @@ void setCustomTerminal(){
   tcsetattr(STDIN_FILENO, TCSANOW, &new_opts);
 }
 
-void setDefaultTerminal(){
+void setNormalTerminal(){
   // lấy thông tin thiết bị đầu cuối hiện tại và lưu trữ trong org_opts
   //restore old settings
   res = tcsetattr(STDIN_FILENO, TCSANOW, &org_opts);

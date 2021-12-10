@@ -1,7 +1,7 @@
 // Nhập từ bàn phím không yêu cầu enter để tiếp tục.
-void setCustomTerminal();
+void setPrivateTerminal();
 
-void setDefaultTerminal();
+void setNormalTerminal();
 
 // clear screen
 void clearScreen();

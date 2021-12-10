@@ -122,7 +122,7 @@ int handleFromClient(int fd){
 
   recieved = recv( fd, recv_msg, BUFF_SIZE, 0);
   recv_msg[recieved] = '\0';
-  // printf("%s\n", recv_msg);
+  
   str = strtok( recv_msg, token);
   if( strcmp(str, SIGNAL_CLOSE) == 0){
     FD_CLR(fd, &master); // Clears the bit for the file descriptor fd in the file descriptor set fdset.

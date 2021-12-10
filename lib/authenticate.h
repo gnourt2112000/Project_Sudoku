@@ -1,6 +1,3 @@
-// Lấy password
-int getPassword(char pass[]);
-
 /*
 Kiểm tra username, password
 Output: 1 - user, pass hợp lệ; 0 - không hợp lệ

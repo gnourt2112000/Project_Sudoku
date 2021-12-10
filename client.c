@@ -159,7 +159,8 @@ int menuSignin(){
     user[strlen(user)-1] = '\0';
 
     printf("\tPassword: ");
-    getPassword(pass);
+    fgets(pass, BUFF_SIZE, stdin);
+    pass[strlen(pass)-1] = '\0';
 
     //check username and password
     sprintf(send_msg, "%s#%s#%s", SIGNAL_CHECKLOGIN, user, pass);
@@ -216,9 +217,11 @@ int menuRegister(){
     user[strlen(user)-1] = '\0';
 
     printf("\tPassword: ");
-    getPassword(pass);
+    fgets(pass, BUFF_SIZE, stdin);
+    pass[strlen(pass)-1] = '\0';
     printf("\n\tConfirm password: ");
-    getPassword(comfirmPass);
+    fgets(comfirmPass, BUFF_SIZE, stdin);
+    comfirmPass[strlen(comfirmPass)-1] = '\0';
     if(strcmp(pass, comfirmPass) == 0){
       // register new account
       sprintf(send_msg, "%s#%s#%s", SIGNAL_CREATEUSER, user, pass);
@@ -286,7 +289,7 @@ int menuStart(){
 }
 
 /*
-Hiển thị phần game 
+Hiển thị phần game
 */
 int menuGame(){
   error[0] = '\0';
@@ -487,7 +490,7 @@ int viewLog(){
 }
 
 /*
-Vẽ bảng chơi 
+Vẽ bảng chơi
 */
 void drawTable(){
   int i, j, k;
@@ -517,7 +520,7 @@ Xử lí, điều khiển quân bằng w,a,s,d, ấn q thì thoát
 */
 int handleGame(){
   char c, info[100], *str;
-  setCustomTerminal();
+  setPrivateTerminal();
   error[0] = '\0';
   info[0] = '\0';
 
@@ -536,7 +539,7 @@ int handleGame(){
     drawTable();
     if(playerTurn){
       if(error[0] != '\0'){
-      	setDefaultTerminal();
+      	setNormalTerminal();
 
       	printf("Error: %s!\n", error);
       	printf("Do you want to try again? (y or n)\n");
@@ -561,10 +564,10 @@ int handleGame(){
       	    }
       	  }
       	}
-      	setCustomTerminal();
+      	setPrivateTerminal();
       }
       else if(info[0] != '\0'){
-      	setDefaultTerminal();
+      	setNormalTerminal();
 
       	printf("\033[0;37m%s\n", info);
       	printf("Your choice: ");
@@ -593,7 +596,7 @@ int handleGame(){
       	    }
       	  }
       	}
-      	setCustomTerminal();
+      	setPrivateTerminal();
       }
       else{
       	c = getchar();
@@ -672,7 +675,7 @@ int handleGame(){
       playerTurn = 1;
     }
   }
-  setDefaultTerminal();
+  setNormalTerminal();
   return 0;
 }
 

@@ -1,21 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-#include <assert.h>
-#include "terminal.h"
-
-/*
-Lấy password
-*/
-int getPassword(char pass[]){
-  int i = 0;
-  setCustomTerminal();
-  while((pass[i] = getchar()) != '\n')
-    i++;
-  pass[i] = '\0';
-  setDefaultTerminal();
-  return i;
-}
 
 /*
 Kiểm tra username, password
