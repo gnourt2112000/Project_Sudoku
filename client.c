@@ -1,21 +1,4 @@
-<<<<<<< HEAD
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <ctype.h>
-/*
-Library of socket
-*/
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-/*
-https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.1.0/com.ibm.zos.v2r1.bpxbd00/rttcga.htm
-https://www.daemon-systems.org/man/tcgetattr.3.html
-*/
-=======
+
 #include<stdio.h>
 #include<sys/socket.h>
 #include<sys/select.h>
@@ -30,7 +13,6 @@ https://www.daemon-systems.org/man/tcgetattr.3.html
 #include <netinet/in.h>
 
 
->>>>>>> update
 #include <termios.h>
 #include <assert.h>
 #include <signal.h>
@@ -42,18 +24,9 @@ https://www.daemon-systems.org/man/tcgetattr.3.html
 #include "lib/authenticate.h"
 #include "lib/terminal.h"
 
-<<<<<<< HEAD
-#define BUFF_SIZE 1024
-int VIEWSIZE = 9;
-
-// fungame
-#define STATUS_START_MENU 0
-#define STATUS_FUNGAME_MENU 1
-=======
 
 #define STATUS_START_MENU 0
 #define STATUS_HARDGAME_MENU 1
->>>>>>> update
 #define STATUS_HANDLE_GAME 2
 #define SIGNAL_CHECKLOGIN "SIGNAL_CHECKLOGIN"
 #define SIGNAL_CREATEUSER "SIGNAL_CREATEUSER"
@@ -63,11 +36,8 @@ int VIEWSIZE = 9;
 
 // game
 #define SIGNAL_NEWGAME "SIGNAL_NEWGAME"
-<<<<<<< HEAD
-=======
 #define SIGNAL_2PLAYERS "SIGNAL_2PLAYERS"
 #define SIGNAL_CHAT "SIGNAL_CHAT"
->>>>>>> update
 #define SIGNAL_ABORTGAME "SIGNAL_ABORTGAME"
 #define SIGNAL_TURN "SIGNAL_TURN"
 #define SIGNAL_WIN "SIGNAL_WIN"
@@ -83,15 +53,6 @@ int VIEWSIZE = 9;
 // ranking
 #define SIGNAL_RANKING "SIGNAL_RANKING"
 
-<<<<<<< HEAD
-// client connect to server
-struct sockaddr_in server_addr;
-int PORT, sock, recieved, isCommunicating;
-char* serverAddress;
-char send_msg[BUFF_SIZE], recv_msg[BUFF_SIZE];
-
-// client variable
-=======
 
 #define SERVER_PORT 9000
 #define MAX_NAME_SZE 20
@@ -102,7 +63,6 @@ char send_msg[BUFF_SIZE], recv_msg[BUFF_SIZE];
 char client_name[MAX_NAME_SZE] ={0};
 
 
->>>>>>> update
 int status; // status of fungame
 char choice, token[] = "#";
 char error[100], user[100], id[30];
@@ -115,66 +75,6 @@ int viewC = 0, viewR = 0;
 // trang thai choi
 int checkStatus;
 
-<<<<<<< HEAD
-
-/*
-Kết nối với server
-*/
-int connectToServer(){
-  isCommunicating = 1; // tao ket noi
-  int errorConnect;
-  recieved = -1;
-  //Step 1: Construct socket
-  if( (sock = socket(AF_INET, SOCK_STREAM, 0)) == -1){
-    strcpy(error,"Error Socket!!!");
-    return -1;
-  }
-
-  //Step 2: Specify server address
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_port = htons(PORT);
-  server_addr.sin_addr.s_addr = inet_addr(serverAddress);
-
-  // set timeout
-  struct timeval timeout;
-  timeout.tv_sec = 20; // after 20 seconds connect will timeout
-  timeout.tv_usec = 0;
-  if (setsockopt (sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0){
-    return -1;
-  }
-  else if (setsockopt (sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0){
-    return -1;
-  }
-
-  //Step 3: Request to connect server
-  if( connect(sock, (struct sockaddr*)&server_addr, sizeof(struct sockaddr)) == -1){
-    errorConnect = errno;
-    sprintf(error,"Error! Can not connect to server! %s",strerror(errorConnect));
-    return -1;
-  }
-  //Step 4: Communicate with server
-  send(sock, send_msg, strlen(send_msg), 0);
-  recieved = recv(sock, recv_msg, BUFF_SIZE, 0);
-  recv_msg[recieved] = '\0';
-  strcpy(send_msg, SIGNAL_CLOSE); // gui tin hieu ngat ket noi
-  send(sock, send_msg, strlen(send_msg), 0);
-  close(sock);
-  if(recieved == -1){
-    printf("\nError: Timeout!!!\n");
-    return -1;
-  }
-  isCommunicating = 0; // ngat ket noi
-  return 0;
-}
-
-/*
-Hiển thị phần login
-*/
-int menuSignin(){
-  error[0] = '\0';
-  char pass[100], *str;
-  while(1){
-=======
 //Function declaration
 int client_create_socket(int *listen_fd);
 int client_recv_from_server(int socket_client, char *recv_msg);
@@ -189,7 +89,6 @@ int menuSignin(int listen_fd){
   while(1){
     memset(send_msg, 0 ,sizeof(send_msg));
     memset(recv_msg, 0 ,sizeof(recv_msg));
->>>>>>> update
     clearScreen();
     printf("\t ____________________________\n");
     printf("\t|----------HARDGAME----------|\n");
@@ -222,13 +121,9 @@ int menuSignin(int listen_fd){
 
     //check username and password
     sprintf(send_msg, "%s#%s#%s", SIGNAL_CHECKLOGIN, user, pass);
-<<<<<<< HEAD
-    if(connectToServer() == 0){
-=======
     client_send_to_server(listen_fd,send_msg);
     printf("%s\n",send_msg );
     client_recv_from_server(listen_fd,recv_msg);
->>>>>>> update
       str = strtok(recv_msg, token);
       if(strcmp(str, SIGNAL_OK) == 0){
         // break;
@@ -239,16 +134,8 @@ int menuSignin(int listen_fd){
       	strcpy(error, str);
         return -2;
       }
-<<<<<<< HEAD
-    }
-    else {
-      printf("Error! Cant connect to server!\n");
-      return -1;
-    }
-=======
      return -1;
 
->>>>>>> update
   }
   // return 0;
 }
@@ -256,19 +143,12 @@ int menuSignin(int listen_fd){
 /*
 Hiển thị phần đăng kí
 */
-<<<<<<< HEAD
-int menuRegister(){
-  error[0] = '\0';
-  char pass[100], comfirmPass[100], *str;
-  while(1){
-=======
 int menuRegister(int listen_fd){
   error[0] = '\0';
   char pass[100], comfirmPass[100], *str;
   while(1){
     memset(send_msg, 0 ,sizeof(send_msg));
     memset(recv_msg, 0 ,sizeof(recv_msg));
->>>>>>> update
     clearScreen();
     printf("\t ____________________________\n");
     printf("\t|----------HARDGAME----------|\n");
@@ -303,12 +183,8 @@ int menuRegister(int listen_fd){
     if(strcmp(pass, comfirmPass) == 0){
       // register new account
       sprintf(send_msg, "%s#%s#%s", SIGNAL_CREATEUSER, user, pass);
-<<<<<<< HEAD
-      if(connectToServer() == 0){
-=======
       client_send_to_server(listen_fd,send_msg);
       client_recv_from_server(listen_fd,recv_msg);
->>>>>>> update
       	str = strtok(recv_msg, token);
       	if(strcmp(str, SIGNAL_OK) == 0)
       	  break;
@@ -316,14 +192,6 @@ int menuRegister(int listen_fd){
       	  str = strtok(NULL, token);
       	  strcpy(error, str);
       	}
-<<<<<<< HEAD
-      }
-      else {
-        printf("Error! Cant connect to server!\n");
-        return -1;
-      }
-=======
->>>>>>> update
     }
     else{
       strcpy(error, "Password does not match");
@@ -335,19 +203,12 @@ int menuRegister(int listen_fd){
 /*
 Hiển thị chọn login, create
 */
-<<<<<<< HEAD
-int menuStart(){
-  int checkSignin = 0, checkRegister = 0;
-  error[0] = '\0';
-  while(1){
-=======
 int menuStart(int listen_fd){
   int checkSignin = 0, checkRegister = 0;
   error[0] = '\0';
   while(1){
     memset(send_msg, 0 ,sizeof(send_msg));
     memset(recv_msg, 0 ,sizeof(recv_msg));
->>>>>>> update
     clearScreen();
     if(error[0] != '\0'){
       printf("Error: %s!\n", error );
@@ -363,35 +224,23 @@ int menuStart(int listen_fd){
     scanf("%c", &choice);
     while(getchar() != '\n');
     if(choice == '1'){
-<<<<<<< HEAD
-      checkSignin = menuSignin();
-=======
       checkSignin = menuSignin(listen_fd);
->>>>>>> update
       if( checkSignin == 0){
         break;
       } else if( checkSignin == -1)
         return -1;
     }
     else if(choice == '2'){
-<<<<<<< HEAD
-      checkRegister = menuRegister();
-=======
       checkRegister = menuRegister(listen_fd);
->>>>>>> update
       if(checkRegister == 0)
         break;
       else if( checkRegister == -1)
         return -1;
     }
-<<<<<<< HEAD
-    else if(choice == '3') return -1;
-=======
     else if(choice == '3') {
       close(listen_fd);
       exit(-1);
     }
->>>>>>> update
     else sprintf(error,"No option %c", choice);
   }
 
@@ -401,19 +250,12 @@ int menuStart(int listen_fd){
 /*
 Hiển thị phần game
 */
-<<<<<<< HEAD
-int menuGame(){
-  error[0] = '\0';
-  char* str;
-  while(1){
-=======
 int menuGame(int listen_fd){
   error[0] = '\0';
   char* str;
   while(1){
     memset(send_msg, 0 ,sizeof(send_msg));
     memset(recv_msg, 0 ,sizeof(recv_msg));
->>>>>>> update
     clearScreen();
     printf("\t____________________________\n");
     printf("\t----------HARDGAME----------\n");
@@ -439,12 +281,8 @@ int menuGame(int listen_fd){
 
     VIEWSIZE = 9;
     sprintf(send_msg, "%s#%d#%s", SIGNAL_NEWGAME, size, user);
-<<<<<<< HEAD
-    if(connectToServer() == 0){
-=======
     client_send_to_server(listen_fd,send_msg);
     client_recv_from_server(listen_fd,recv_msg);
->>>>>>> update
       str = strtok(recv_msg, token);
       if(strcmp(str, SIGNAL_OK) == 0){
       	str = strtok(NULL, token);
@@ -464,41 +302,24 @@ int menuGame(int listen_fd){
       	 str = strtok(NULL, token);
       	 strcpy(error, str);
       }
-<<<<<<< HEAD
-    }else {
-        printf("Error! Cant connect to server!\n");
-    }
-=======
->>>>>>> update
   }
   return 0;
 }
 
 
-<<<<<<< HEAD
-int handleRanking(){
-  char* str;
-  error[0] = '\0';
-
-=======
 int handleRanking(int listen_fd){
   char* str;
   error[0] = '\0';
   memset(send_msg, 0 ,sizeof(send_msg));
   memset(recv_msg, 0 ,sizeof(recv_msg));
->>>>>>> update
   clearScreen();
   printf("----------HARDGAME----------\n");
   printf("\033[0;33m\tUsername: %s \033[0;37m\n", user);
   printf("--------Sudoku Ranking--------\n");
   printf("Your information: \n");
   sprintf(send_msg, "%s#%s", SIGNAL_RANKING, user);
-<<<<<<< HEAD
-  if(connectToServer() == 0){
-=======
   client_send_to_server(listen_fd,send_msg);
   client_recv_from_server(listen_fd,recv_msg);
->>>>>>> update
     str = strtok(recv_msg, token);
     if(strcmp(str, SIGNAL_OK) == 0){
       str = strtok(NULL, token);
@@ -526,15 +347,8 @@ int handleRanking(int listen_fd){
       else printfRanking(id);
       rootRank = NULL; cur = NULL; new = NULL;
     }
-<<<<<<< HEAD
-  }
-  else {
-    printf("Error! Cant connect to server!\n");
-  }
-=======
 
 
->>>>>>> update
   printf("Press 'q' to quit: ");
   choice = getchar();
   while(getchar() != '\n');
@@ -543,18 +357,12 @@ int handleRanking(int listen_fd){
 }
 
 
-<<<<<<< HEAD
-int menuHardGame(){
-  error[0] = '\0';
-  while(1){
-=======
 
 int menuHardGame(int listen_fd){
   error[0] = '\0';
   while(1){
     memset(send_msg, 0 ,sizeof(send_msg));
     memset(recv_msg, 0 ,sizeof(recv_msg));
->>>>>>> update
     clearScreen();
     if(error[0] != '\0'){
       printf("Error: %s!\n", error);
@@ -564,29 +372,15 @@ int menuHardGame(int listen_fd){
     printf("\t|----------HARDGAME------------|\n");
     printf("\t|\033[0;33m\tWelcome %s \033[0;37m        |\n", user);
     printf("\t|1.Sudoku game                 |\n");
-<<<<<<< HEAD
-    printf("\t|2.Sudoku ranking              |\n");
-    printf("\t|3.Sign out                    |\n");
-=======
     printf("\t|2.Sudoku 2 players            |\n");
     printf("\t|3.Sudoku ranking              |\n");
     printf("\t|4.Sign out                    |\n");
->>>>>>> update
     printf("\t|______________________________|\n");
     printf("\tYour choice: ");
     scanf("%c", &choice);
     while(getchar() != '\n');
     if(choice == '1'){
       checkStatus = 1;
-<<<<<<< HEAD
-      if(menuGame() == 0) break;
-    }
-    else if(choice == '2'){
-      checkStatus = 2;
-      break;
-    }
-    else if(choice == '3'){
-=======
       if(menuGame(listen_fd) == 0) break;
     }
     else if(choice == '2'){
@@ -601,7 +395,6 @@ int menuHardGame(int listen_fd){
     else if(choice == '4'){
       close(listen_fd);
       exit(-1);
->>>>>>> update
       return -1;
     }
     else {
@@ -611,16 +404,6 @@ int menuHardGame(int listen_fd){
   return 0;
 }
 
-<<<<<<< HEAD
-/*
-View log
-*/
-int viewLog(){
-  char usernameLog[100], *str;
-
-  sprintf(send_msg, "%s#%s", SIGNAL_VIEWLOG, id);
-  if(connectToServer() == 0){
-=======
 
 
 /*
@@ -633,7 +416,6 @@ int viewLog(int listen_fd){
   sprintf(send_msg, "%s#%s", SIGNAL_VIEWLOG, id);
   client_send_to_server(listen_fd,send_msg);
   client_recv_from_server(listen_fd,recv_msg);
->>>>>>> update
     // get file name
     int j = 0;
     for(int i = 15; i < strlen(recv_msg); i++){
@@ -661,31 +443,18 @@ int viewLog(int listen_fd){
     }
     else if(strcmp(str, SIGNAL_ERROR) == 0){
       strcpy(send_msg, SIGNAL_CLOSE);
-<<<<<<< HEAD
-      send(sock, send_msg, strlen(send_msg), 0);
-      close(sock);
-      isCommunicating = 0;
-=======
       // send(sock, send_msg, strlen(send_msg), 0);
       client_send_to_server(listen_fd,send_msg);
       // client_recv_from_server(*listen_fd,recv_msg);
       close(listen_fd);
 
->>>>>>> update
       str = strtok(NULL, token);
       strcpy(error, str);
       return -1;
     }
     printLog(usernameLog); // in log
-<<<<<<< HEAD
-  }
-  else {
-    printf("Error! Cant connect to server!\n");
-  }
-=======
 
 
->>>>>>> update
 
   printf("Press 'q' to quit: ");
   choice = getchar();
@@ -723,11 +492,7 @@ void drawTable(){
 /*
 Xử lí, điều khiển quân bằng w,a,s,d, ấn q thì thoát
 */
-<<<<<<< HEAD
-int handleGame(){
-=======
 int handleGame(int listen_fd){
->>>>>>> update
   char c, info[100], *str;
   setPrivateTerminal();
   error[0] = '\0';
@@ -737,11 +502,8 @@ int handleGame(int listen_fd){
   col = size / 2;
   row = size / 2;
   while(1){
-<<<<<<< HEAD
-=======
     memset(send_msg, 0 ,sizeof(send_msg));
     memset(recv_msg, 0 ,sizeof(recv_msg));
->>>>>>> update
     clearScreen();
     printf("\033[0;37m----------SUDOKU GAME----------\n");
     printf("\033[0;33m\tUsername: %s - GameID = %s\033[0;37m\n", user, id);
@@ -770,16 +532,10 @@ int handleGame(int listen_fd){
       	    playerTurn = 0;
       	  else if(strcmp(info, INFO_WIN) == 0){
       	    if(choice == 'y' || choice == 'Y'){
-<<<<<<< HEAD
-      	      if(viewLog() == 0){
-            		sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
-            		connectToServer();
-=======
       	      if(viewLog(listen_fd) == 0){
             		sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
                 client_send_to_server(listen_fd,send_msg);
                 client_recv_from_server(listen_fd,recv_msg);
->>>>>>> update
             		return -1;
       	      }
       	    }
@@ -799,27 +555,14 @@ int handleGame(int listen_fd){
       	    info[0] = '\0';
       	  else if(strcmp(info, INFO_WIN) == 0){
       	    sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
-<<<<<<< HEAD
-      	    connectToServer();
-=======
             client_send_to_server(listen_fd,send_msg);
             client_recv_from_server(listen_fd,recv_msg);
->>>>>>> update
       	    return -1;
       	  }
       	}
       	else if(choice == 'y' || choice == 'Y'){
       	  if(strcmp(info, INFO_QUIT) == 0){
       	    sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
-<<<<<<< HEAD
-      	    connectToServer();
-      	    return -1;
-      	  }
-      	  else if(strcmp(info, INFO_WIN) == 0){
-      	    if(viewLog() == 0){
-      	      sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
-      	      connectToServer();
-=======
             client_send_to_server(listen_fd,send_msg);
             client_recv_from_server(listen_fd,recv_msg);
       	    return -1;
@@ -829,7 +572,6 @@ int handleGame(int listen_fd){
       	      sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
               client_send_to_server(listen_fd,send_msg);
               client_recv_from_server(listen_fd,recv_msg);
->>>>>>> update
       	      return -1;
       	    }
       	  }
@@ -892,12 +634,8 @@ int handleGame(int listen_fd){
     }
     else {
       sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_TURN, id, user, col, row, userVal);
-<<<<<<< HEAD
-      if(connectToServer() == 0){
-=======
       client_send_to_server(listen_fd,send_msg);
       client_recv_from_server(listen_fd,recv_msg);
->>>>>>> update
       	str = strtok(recv_msg, token);
       	if(strcmp(str, SIGNAL_TURN) == 0){
       	  str = strtok(NULL, token);
@@ -914,10 +652,6 @@ int handleGame(int listen_fd){
       	  str = strtok(NULL, token);
       	  strcpy(error, str);
       	}
-<<<<<<< HEAD
-      }
-=======
->>>>>>> update
       playerTurn = 1;
     }
   }
@@ -925,47 +659,6 @@ int handleGame(int listen_fd){
   return 0;
 }
 
-<<<<<<< HEAD
-int main(int argc, char* argv[]){
-  int err;
-  if(argc != 3){
-    printf("Syntax Error.\n");
-    printf("Syntax: ./client IPAddress PortNumber\n");
-    return 0;
-  }
-  serverAddress = argv[1];
-  PORT = atoi(argv[2]);
-
-  status = STATUS_START_MENU;
-  while(1){
-    if(status == STATUS_START_MENU){
-      if(menuStart() == -1)
-        break;
-      else
-        status = STATUS_FUNGAME_MENU;
-    }
-    else if(status == STATUS_FUNGAME_MENU){
-      if(menuHardGame() == - 1)
-        status = STATUS_START_MENU;
-      else
-        status = STATUS_HANDLE_GAME;
-    }
-    else if(status == STATUS_HANDLE_GAME){
-      if(checkStatus == 1){
-        if(handleGame() == - 1){
-          free(table);
-          table = NULL;
-          status = STATUS_FUNGAME_MENU;
-        }
-      }
-      else if(checkStatus == 2){
-        handleRanking();
-        status = STATUS_FUNGAME_MENU;
-      }
-    }
-  }
-  return 0;
-=======
 
 int main(int argc, char *argv[]) {
 
@@ -1139,5 +832,4 @@ int client_select(int max_fd,int listen_fd, fd_set *readfds, fd_set *writefds) {
     }
 
     return 0;
->>>>>>> update
 }
