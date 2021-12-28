@@ -1,24 +1,23 @@
-# TCP_SOCKET
+# Game
 
-Basic TCP Client/Server communication :
+Project Môn học thực hành lập trình mạng, được viết bằng C.
 
-
-Build Steps :
-1. gcc -o server server.c
-2. gcc -o client client.c
-
-
-
-
-Execute Steps :
-1. Run the server using ./server
-2. Run clients in other terminals ./client
-3. Server default listening port = 9000 on localhost
-
-
-NOTE:
-Its for beginners ,who want to experience the socket
-code and analyse the problems during coding. There is always
-hope for changes in this code ,so please send the pull request
-for changes
-
+**Chức năng của Chương trình**:
+  - Đăng ký
+  - Đăng nhập
+  - Chơi game sudoku
+  - Xem log (lịch sử chơi)
+  - Xem bảng xếp hạng và thông tin người chơi 
+---
+**Công nghệ sử dụng**:
+  - Sử dụng thư viện termios.h để ẩn khi nhập
+  - Sử dụng thuật toán backtracking để giải sudoku
+  - Kết nối bằng giao thức TCP
+  - Nhiều client cùng kết nối với server sử dụng select()
+---
+**Hướng dẫn cài đặt**:
+1. Clone repo từ github.
+2. Mở Terminal và gõ `make` để biên dịch chương trình.
+3. Mở 2 cửa sổ Terminal, 1 cửa sổ là server, 1 cửa sổ là client.
+4. Với Server gõ lệnh: `./server`
+4. Với Client gõ lệnh: `./client`
