@@ -40,7 +40,7 @@
 #define SIGNAL_2PLAYERS "SIGNAL_2PLAYERS"
 #define SIGNAL_CHAT "SIGNAL_CHAT"
 #define SIGNAL_ABORTGAME "SIGNAL_ABORTGAME"
-#define SIGNAL_TURN "SIGNAL_TURN"
+#define SIGNAL_INPUT "SIGNAL_INPUT"
 #define SIGNAL_CHECK_FALSE "SIGNAL_CHECK_FALSE"
 #define SIGNAL_CHECK_TRUE "SIGNAL_CHECK_TRUE"
 #define SIGNAL_WIN "SIGNAL_WIN"
@@ -208,20 +208,6 @@ int server_create_socket(int *listen_fd) {
 
 }
 
-//Accept the connection to server
-// int server_new_client_handle(int listen_fd, int *new_socket_fd, char* buffer) {
-//         struct sockaddr_in client_addr;
-//         int len = sizeof(struct sockaddr);
-//         bzero(&client_addr,sizeof(client_addr));
-//         if((*new_socket_fd = accept(listen_fd, (struct sockaddr*)&client_addr, &len)) < 0) {
-//             perror("ERROR :accept failed");
-//             return -1;
-//         }
-//         server_add_new_client(client_addr ,*new_socket_fd,buffer);
-//
-//     return 0;
-// }
-
 //Receiving socket data from clients
 int server_recv_from_client(int client_socket, char *recv_msg) {
     int read_bytes = 0;
@@ -299,19 +285,6 @@ int server_select(int max_fd,int listen_fd, fd_set *readfds, fd_set *writefds) {
            return -1;
        }
 
-       // while(1){
-       //   server_recv_from_client(new_socket_fd,buffer);
-       //   if(strcmp(buffer,"truong") == 0){
-       //     server_send_to_client(new_socket_fd,"OK");
-       //     server_add_new_client(client_addr ,new_socket_fd,buffer);
-       //     printf("New socket created = %d\n",new_socket_fd);
-       //     goto out;
-       //   }else{
-       //     memset(buffer, 0 ,sizeof(buffer));
-       //     server_send_to_client(new_socket_fd,"ERROR");
-       //     printf("%s\n","Sai tai khoan" );
-       //   }
-       // }
        while(1){
          memset(recv_msgg, 0 ,sizeof(recv_msgg));
 
@@ -355,8 +328,6 @@ int server_select(int max_fd,int listen_fd, fd_set *readfds, fd_set *writefds) {
          else{
            sprintf( send_buff,"%s#%s", SIGNAL_ERROR, "Username or Password is incorrect");
            send(new_socket_fd, send_buff, strlen(send_buff), 0);
-           // while(1); // test timeout
-           // server_send_to_client(fd,send_msg);
          }
 
        }else if( strcmp(str, SIGNAL_CLOSE) == 0){
@@ -464,10 +435,8 @@ int process_recv_data(int socket,char*buffer) {
       // Play new game
 
       initSudoku();
-      str = strtok(NULL, token); //get size
-      recieved = atoi(str);
       str = strtok(NULL, token); //get user
-      id = addInfo(inet_ntoa(client_addr.sin_addr), recieved, str); //get id game
+      id = addInfo(inet_ntoa(client_addr.sin_addr), str); //get id game
       printf(" game with id = %s\n", id);
       printf(" Game Info: ");
       printInfo( getInfo(id) );
@@ -499,7 +468,7 @@ int process_recv_data(int socket,char*buffer) {
       server_send_to_client(socket,send_msg);
       goto out;
     }
-    else if(strcmp(str, SIGNAL_TURN) == 0){
+    else if(strcmp(str, SIGNAL_INPUT) == 0){
       // Quay về server để xử lí game sudoku
       id = strtok(NULL, token); // get game id
       user = strtok(NULL, token); // get user name
@@ -548,7 +517,7 @@ int process_recv_data(int socket,char*buffer) {
                 result--;
             }
             if(check == 1){
-              sprintf(send_msg, "%s#%s", SIGNAL_TURN,SIGNAL_CHECK_FALSE);
+              sprintf(send_msg, "%s#%s", SIGNAL_INPUT,SIGNAL_CHECK_FALSE);
               server_send_to_client(socket,send_msg);
             }else{
               if(count == 81){
@@ -557,7 +526,7 @@ int process_recv_data(int socket,char*buffer) {
                 sprintf(send_msg, "%s#%d", SIGNAL_WIN,result);
                 server_send_to_client(socket,send_msg);
               }else{
-                sprintf(send_msg, "%s#%s", SIGNAL_TURN,SIGNAL_CHECK_TRUE);
+                sprintf(send_msg, "%s#%s", SIGNAL_INPUT,SIGNAL_CHECK_TRUE);
                 server_send_to_client(socket,send_msg);
               }
             }

@@ -1,4 +1,3 @@
-
 #include<stdio.h>
 #include<sys/socket.h>
 #include<sys/select.h>
@@ -39,7 +38,7 @@
 #define SIGNAL_2PLAYERS "SIGNAL_2PLAYERS"
 #define SIGNAL_CHAT "SIGNAL_CHAT"
 #define SIGNAL_ABORTGAME "SIGNAL_ABORTGAME"
-#define SIGNAL_TURN "SIGNAL_TURN"
+#define SIGNAL_INPUT "SIGNAL_INPUT"
 #define SIGNAL_WIN "SIGNAL_WIN"
 #define SIGNAL_LOST "SIGNAL_LOST"
 #define SIGNAL_VIEWLOG "SIGNAL_VIEWLOG"
@@ -56,9 +55,8 @@
 
 #define SERVER_PORT 9000
 #define MAX_NAME_SZE 20
-#define MAX_BUFFER_SIZE 1024
 #define BUFF_SIZE 1024
-int VIEWSIZE = 9;
+
 char send_msg[BUFF_SIZE], recv_msg[BUFF_SIZE];
 char client_name[MAX_NAME_SZE] ={0};
 
@@ -69,8 +67,7 @@ char error[100], user[100], id[30];
 
 // draw table
 char *table;
-int size=9, playerTurn, col, row, userVal;
-int viewC = 0, viewR = 0;
+int playerTurn, col, row, userVal;
 
 // trang thai choi
 int checkStatus;
@@ -279,8 +276,7 @@ int menuGame(int listen_fd){
       }
     }
 
-    VIEWSIZE = 9;
-    sprintf(send_msg, "%s#%d#%s", SIGNAL_NEWGAME, size, user);
+    sprintf(send_msg, "%s#%s", SIGNAL_NEWGAME, user);
     client_send_to_server(listen_fd,send_msg);
     client_recv_from_server(listen_fd,recv_msg);
       str = strtok(recv_msg, token);
@@ -289,8 +285,8 @@ int menuGame(int listen_fd){
       	strcpy(id, str);
       	  //init table
         str = strtok(NULL, token);
-      	table = malloc(size * size);
-      	for(int i = 0; i < size * size; i++){
+      	table = malloc(81);
+      	for(int i = 0; i < 81; i++){
           if(str[i] != '0')
       	     table[i] = str[i];
           else
@@ -469,19 +465,19 @@ Vẽ bảng chơi
 void drawTable(){
   int i, j, k;
 
-  for(i = 0; i < VIEWSIZE; i++){
+  for(i = 0; i < 9; i++){
     if(i == 3 || i == 6){
       printf("%s","                             \n");
     }
-    for(j = 0; j < VIEWSIZE; j++){
+    for(j = 0; j < 9; j++){
       if(j == 3 || j == 6){
         printf("%s"," ");
       }
         if(i == row && j == col){
-          printf("\033[0;37m[\033[0;37m%c\033[0;37m]", table[i * size + j]); // white
+          printf("\033[0;37m[\033[0;37m%c\033[0;37m]", table[i * 9 + j]); // white
         }
         else{
-          printf("\033[0;36m[\033[0;33m%c\033[0;36m]", table[i * size + j]); // yellow
+          printf("\033[0;36m[\033[0;33m%c\033[0;36m]", table[i * 9 + j]); // yellow
 
         }
       }
@@ -499,8 +495,8 @@ int handleGame(int listen_fd){
   info[0] = '\0';
 
   playerTurn = 1;
-  col = size / 2;
-  row = size / 2;
+  col = 4;
+  row = 4;
   while(1){
     memset(send_msg, 0 ,sizeof(send_msg));
     memset(recv_msg, 0 ,sizeof(recv_msg));
@@ -581,51 +577,51 @@ int handleGame(int listen_fd){
       else{
       	c = getchar();
       	if(c == 'w' && row > 0) row--;
-      	else if(c == 's' && row < size - 1) row++;
-      	else if(c == 'd' && col < size - 1) col++;
+      	else if(c == 's' && row < 9 - 1) row++;
+      	else if(c == 'd' && col < 9 - 1) col++;
       	else if(c == 'a' && col > 0) col--;
-        else if(c == '1' && table[row * size + col] == ' '){
-      	  table[row * size + col] = '1';
+        else if(c == '1' && table[row * 9 + col] == ' '){
+      	  table[row * 9 + col] = '1';
           playerTurn = 0;
           userVal = 1;
       	}
-        else if(c == '2' && table[row * size + col] == ' '){
-      	  table[row * size + col] = '2';
+        else if(c == '2' && table[row * 9 + col] == ' '){
+      	  table[row * 9 + col] = '2';
           playerTurn = 0;
           userVal = 2;
       	}
-        else if(c == '3' && table[row * size + col] == ' '){
-      	  table[row * size + col] = '3';
+        else if(c == '3' && table[row * 9 + col] == ' '){
+      	  table[row * 9 + col] = '3';
           playerTurn = 0;
           userVal = 3;
       	}
-        else if(c == '4' && table[row * size + col] == ' '){
-      	  table[row * size + col] = '4';
+        else if(c == '4' && table[row * 9 + col] == ' '){
+      	  table[row * 9 + col] = '4';
           playerTurn = 0;
           userVal = 4;
       	}
-        else if(c == '5' && table[row * size + col] == ' '){
-      	  table[row * size + col] = '5';
+        else if(c == '5' && table[row * 9 + col] == ' '){
+      	  table[row * 9 + col] = '5';
           playerTurn = 0;
           userVal = 5;
       	}
-        else if(c == '6' && table[row * size + col] == ' '){
-      	  table[row * size + col] = '6';
+        else if(c == '6' && table[row * 9 + col] == ' '){
+      	  table[row * 9 + col] = '6';
           playerTurn = 0;
           userVal = 6;
       	}
-        else if(c == '7' && table[row * size + col] == ' '){
-      	  table[row * size + col] = '7';
+        else if(c == '7' && table[row * 9 + col] == ' '){
+      	  table[row * 9 + col] = '7';
           playerTurn = 0;
           userVal = 7;
       	}
-        else if(c == '8' && table[row * size + col] == ' '){
-      	  table[row * size + col] = '8';
+        else if(c == '8' && table[row * 9 + col] == ' '){
+      	  table[row * 9 + col] = '8';
           playerTurn = 0;
           userVal = 8;
       	}
-        else if(c == '9' && table[row * size + col] == ' '){
-      	  table[row * size + col] = '9';
+        else if(c == '9' && table[row * 9 + col] == ' '){
+      	  table[row * 9 + col] = '9';
           playerTurn = 0;
           userVal = 9;
       	}
@@ -633,14 +629,14 @@ int handleGame(int listen_fd){
       }
     }
     else {
-      sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_TURN, id, user, col, row, userVal);
+      sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_INPUT, id, user, col, row, userVal);
       client_send_to_server(listen_fd,send_msg);
       client_recv_from_server(listen_fd,recv_msg);
       	str = strtok(recv_msg, token);
-      	if(strcmp(str, SIGNAL_TURN) == 0){
+      	if(strcmp(str, SIGNAL_INPUT) == 0){
       	  str = strtok(NULL, token);
           if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
-              table[row * size + col] = ' ';
+              table[row * 9 + col] = ' ';
           }
       	}
       	else if(strcmp(str, SIGNAL_WIN) == 0){
@@ -761,7 +757,7 @@ int client_create_socket(int *listen_fd) {
 int client_recv_from_server(int client_socket, char *recv_msg) {
      int read_bytes = 0;
 
-     if((read_bytes = recv(client_socket, recv_msg, MAX_BUFFER_SIZE, 0)) > 0) {
+     if((read_bytes = recv(client_socket, recv_msg, BUFF_SIZE, 0)) > 0) {
             printf("%s\n",recv_msg);
     }
     else if(read_bytes == 0) {
@@ -802,8 +798,8 @@ int client_build_fdsets(int listenfd, fd_set *readfds, fd_set *writefds, fd_set 
 
 //Client select call
 int client_select(int max_fd,int listen_fd, fd_set *readfds, fd_set *writefds) {
-    char recv_msgg[MAX_BUFFER_SIZE] ;
-    char send_buff[MAX_BUFFER_SIZE] ;
+    char recv_msgg[BUFF_SIZE] ;
+    char send_buff[BUFF_SIZE] ;
     memset(recv_msgg, 0 ,sizeof(recv_msgg));
     memset(send_buff, 0 ,sizeof(send_buff));
 

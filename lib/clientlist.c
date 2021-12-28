@@ -20,10 +20,10 @@ void initList(){
 void getID(char* t){
   struct timeval time;
   gettimeofday(&time, NULL);
-  sprintf(t, "%ld%ld", time.tv_sec, time.tv_usec);	
+  sprintf(t, "%ld%ld", time.tv_sec, time.tv_usec);
 }
 
-ClientInfo* newInfo(char* id, char user[], char addr[], int size, char logfile[]){
+ClientInfo* newInfo(char* id, char user[], char addr[], char logfile[]){
   ClientInfo* info;
   int i;
   info = (ClientInfo*)malloc(sizeof(ClientInfo));
@@ -31,9 +31,8 @@ ClientInfo* newInfo(char* id, char user[], char addr[], int size, char logfile[]
   strcpy(info->id, id);
   strcpy(info->user, user);
   strcpy(info->address, addr);
-  info->size = size;
-  info->table = (char*)malloc(size * size);
-  for(i = 0; i < size * size; i++)
+  info->table = (char*)malloc(81);
+  for(i = 0; i < 81; i++)
     (info->table)[i] = 0;
   strcpy(info->logfile, logfile);
   info->next = NULL;
@@ -54,28 +53,28 @@ void freeInfo(ClientInfo* i){
   free(i->id);
 }
 
-char* addInfo(char addr[], int size, char user[]){
+char* addInfo(char addr[], char user[]){
   ClientInfo* i;
-  ClientInfo* cur;  
+  ClientInfo* cur;
   char logfile[100];
   char id[30];
   char time[50];
   getID(id);
   getTime(time);
   sprintf(logfile,"%s#%s#%s#%s.log", user, id, addr, time);
-  i = newInfo(id, user, addr, size, logfile);
+  i = newInfo(id, user, addr, logfile);
 
   cur = root;
   while(cur != NULL && cur->next != NULL)
     cur = cur->next;
-  
+
   if(cur == NULL){
     i->next = NULL;
-    root = i;  
+    root = i;
   }
   else{
     cur->next = i;
-    i->next = NULL;  
+    i->next = NULL;
   }
   return i->id;
 }
@@ -85,7 +84,7 @@ int removeInfo(char* id){
   cur = root;
   while(cur != NULL && strcmp(cur->id,id) != 0){
     prev = cur;
-    cur = cur->next;    
+    cur = cur->next;
   }
 
   if(cur == NULL)
@@ -93,12 +92,12 @@ int removeInfo(char* id){
   else if(cur == root){
     root = root->next;
     freeInfo(cur);
-    free(cur); 
+    free(cur);
   }
   else{
-    prev->next = cur->next;  
+    prev->next = cur->next;
     freeInfo(cur);
-    free(cur);  
+    free(cur);
   }
 
   return 0;
@@ -106,6 +105,5 @@ int removeInfo(char* id){
 
 void printInfo(ClientInfo* i){
   if(i != NULL)
-    printf("id= %s user = %s addr=%s size=%d log=%s\n", i->id, i->user, i->address, i->size, i->logfile);
+    printf("id= %s user = %s addr=%s log=%s\n", i->id, i->user, i->address, i->logfile);
 }
-
