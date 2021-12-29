@@ -139,13 +139,14 @@ void initSudoku(){
   time_t t;
   srand((unsigned) time(&t));
   r = rand() % total_data;
-  puzzle = createPuzzle(sudoku[r].data);
+  puzzle = createPuzzle(sudoku[0].data);
   userPuzzle = copyPuzzle(puzzle);
   tempPuzzle = copyPuzzle(puzzle);
   printPuzzle(userPuzzle);
   result = 3;
   count = 1;
-  strcpy(game,sudoku[r].data);
+  strcpy(game,sudoku[0].data);
+
 }
 
 /*

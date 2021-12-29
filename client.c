@@ -526,7 +526,7 @@ int handleGame(int listen_fd){
       	  error[0] = '\0';
       	  if(info[0] == '\0')
       	    playerTurn = 0;
-      	  else if(strcmp(info, INFO_WIN) == 0){
+      	  else if(strcmp(strstr(info, INFO_WIN),INFO_WIN) == 0){
       	    if(choice == 'y' || choice == 'Y'){
       	      if(viewLog(listen_fd) == 0){
             		sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
@@ -549,7 +549,7 @@ int handleGame(int listen_fd){
       	if(choice == 'n' || choice == 'N'){
       	  if(strcmp(info, INFO_QUIT) == 0)
       	    info[0] = '\0';
-      	  else if(strcmp(info, INFO_WIN) == 0){
+      	  else if(strcmp(strstr(info, INFO_WIN),INFO_WIN) == 0){
       	    sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
             client_send_to_server(listen_fd,send_msg);
             client_recv_from_server(listen_fd,recv_msg);
@@ -563,7 +563,7 @@ int handleGame(int listen_fd){
             client_recv_from_server(listen_fd,recv_msg);
       	    return -1;
       	  }
-      	  else if(strcmp(info, INFO_WIN) == 0){
+      	  else if(strcmp(strstr(info, INFO_WIN),INFO_WIN) == 0){
       	    if(viewLog(listen_fd) == 0){
       	      sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
               client_send_to_server(listen_fd,send_msg);
@@ -640,9 +640,11 @@ int handleGame(int listen_fd){
           }
       	}
       	else if(strcmp(str, SIGNAL_WIN) == 0){
+          char result[100];
           str = strtok(NULL, token);
-          strcpy(info,INFO_WIN);
-          //sprintf(info,"%s: %s\n%s","Result",str,INFO_WIN);
+
+          sprintf(result,"Result: %s\n%s",str,INFO_WIN);
+          strcpy(info,result);
         }
       	else if(strcmp(str, SIGNAL_ERROR) == 0){
       	  str = strtok(NULL, token);
