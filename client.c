@@ -39,6 +39,7 @@
 #define SIGNAL_CHAT "SIGNAL_CHAT"
 #define SIGNAL_ABORTGAME "SIGNAL_ABORTGAME"
 #define SIGNAL_INPUT "SIGNAL_INPUT"
+#define SIGNAL_INPUT2 "SIGNAL_INPUT2"
 #define SIGNAL_WIN "SIGNAL_WIN"
 #define SIGNAL_LOST "SIGNAL_LOST"
 #define SIGNAL_VIEWLOG "SIGNAL_VIEWLOG"
@@ -382,6 +383,7 @@ int menuHardGame(int listen_fd){
     else if(choice == '2'){
       checkStatus = 2;
       //connectToClient(listen_fd);
+
       break;
     }
     else if(choice == '3'){
@@ -676,14 +678,6 @@ int main(int argc, char *argv[]) {
 out:
     while(1) {
          max_fd = client_build_fdsets(listen_fd, &readfds, &writefds, &exceptfds);
-         if(k == 0){
-           printf("\033[0;37m-------------------------ROOM CHAT---------------------\n");
-           printf("\tNhap LIST de xem danh sach nguoi dang online\n");
-           printf("\tNhap CONNECT:username de ket noi voi nguoi do\n");
-           printf("\tNhan :q de thoat\n");
-           printf("-------------------------------------------------------\n");
-           k++;
-         }
          if(client_select(max_fd,listen_fd, &readfds, &writefds)==-1){
            close(listen_fd);
            exit(-1);
@@ -740,7 +734,521 @@ int client_create_socket(int *listen_fd) {
         }
         else if(checkStatus == 2){
           clearScreen();
-          return 0;
+          printf("\033[0;37m-------------------------ROOM---------------------\n");
+          printf("\tWelcome to %s\n",user);
+          printf("\tNhap LIST de xem danh sach nguoi dang online\n");
+          printf("\tNhap CONNECT:username de ket noi voi nguoi do\n");
+          printf("\tNhan :q de thoat\n");
+          printf("-------------------------------------------------------\n");
+          char firstPlayer[30];
+          int out = 0;
+          while(1){
+            if(out == 1) break;
+            memset(send_msg, 0 ,sizeof(send_msg));
+            memset(recv_msg, 0 ,sizeof(recv_msg));
+            scanf("%s",send_msg );
+            printf("%s\n",send_msg );
+            send(*listen_fd, send_msg, strlen(send_msg), 0);
+            // client_send_to_server(listen_fd,send_buff);
+            client_recv_from_server(*listen_fd,recv_msg);
+            if(strcmp(send_msg,"LIST")==0)
+              continue;
+            error[0] = '\0';
+            char* str;
+
+            while(1){
+              if(out == 1) break;
+              if(error[0] != '\0'){
+                printf("Error: %s!\n", error);
+                printf("Do you want to try again? (y or n): ");
+                choice = getchar();
+                while(getchar() != '\n');
+                if(choice =='n' || choice =='N'){
+                	error[0] = '\0';
+                  out = 1;
+                	break;
+                }
+                else if(choice !='y' && choice !='Y')
+                  continue;
+                else{
+                	error[0] = '\0';
+                	continue;
+                }
+              }
+
+                str = strtok(recv_msg, token);
+                if(strcmp(str, SIGNAL_OK) == 0){
+                  str = strtok(NULL, token);
+                	strcpy(id, str);
+                	str = strtok(NULL, token);
+                	table = malloc(81);
+                	for(int i = 0; i < 81; i++){
+                    if(str[i] != '0')
+                	     table[i] = str[i];
+                    else
+                        table[i] = ' ';
+                  }
+                  str = strtok(NULL,token);
+                  strcpy(firstPlayer,str);
+                }
+                else if(strcmp(str, SIGNAL_ERROR) == 0){
+                	 str = strtok(NULL, token);
+                	 strcpy(error, str);
+                }
+                char c, info[100];
+                setPrivateTerminal();
+                error[0] = '\0';
+                info[0] = '\0';
+                if(strcmp(user,firstPlayer) != 0)
+                  playerTurn = 1;
+                else
+                  playerTurn = 0;
+                col = 4;
+                row = 4;
+                while(1){
+                  if(out == 1) break;
+                  clearScreen();
+                  printf("\033[0;37m----------SUDOKU GAME----------\n");
+                  printf("\033[0;33m\tUsername: %s - GameID = %s\033[0;37m\n", user, id);
+                  printf("\tPress w,a,s,d to move \n");
+                  printf("\tPress 1 -> 9 to fill\n");
+                  printf("\tNeu ban dien sai thi se ko hien so va bi tru diem\n");
+                  printf("\tPress 'q' to quit\n");
+                  printf("-----------------------------\n");
+                  drawTable();
+                  if(playerTurn){
+                    if(info[0] != '\0'){
+                    	setNormalTerminal();
+
+                    	printf("\033[0;37m%s\n", info);
+                      while(choice != 'q'){
+                        choice = getchar();
+                        if(choice == 'q'){
+                          out = 1;
+                          continue;
+                        }
+                      }
+                    	setPrivateTerminal();
+                    }
+
+                    else{
+                    	c = getchar();
+                    	if(c == 'w' && row > 0) row--;
+                    	else if(c == 's' && row < 9 - 1) row++;
+                    	else if(c == 'd' && col < 9 - 1) col++;
+                    	else if(c == 'a' && col > 0) col--;
+                      else if(c == '1' && table[row * 9 + col] == ' '){
+                    	  table[row * 9 + col] = '1';
+                        userVal = 1;
+                        sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_INPUT2, id, user, col, row, userVal);
+                        client_send_to_server(*listen_fd,send_msg);
+                        client_recv_from_server(*listen_fd,recv_msg);
+                        	str = strtok(recv_msg, token);
+                        	if(strcmp(str, SIGNAL_INPUT2) == 0){
+                        	  str = strtok(NULL, token);
+                            if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
+                              str = strtok(NULL, token); // //get column
+                              col = atoi(str);
+
+                              str = strtok(NULL, token); //get row
+                              row = atoi(str);
+                                table[row * 9 + col] = ' ';
+                                playerTurn = 0;
+                            }
+                        	}
+                        	else if(strcmp(str, SIGNAL_WIN) == 0){
+                            char result[100];
+                            char point[10];
+                            char winner[30];
+                            str = strtok(NULL, token);
+                            strcpy(point,str);
+                            str = strtok(NULL, token);
+                            strcpy(winner,str);
+                            sprintf(result,"Result: %s\n%s",point,"You win");
+                            strcpy(info,result);
+
+                            continue;
+                          }
+                        	else if(strcmp(str, SIGNAL_ERROR) == 0){
+                        	  str = strtok(NULL, token);
+                        	  strcpy(error, str);
+                            continue;
+                        	}
+                    	}
+                      else if(c == '2' && table[row * 9 + col] == ' '){
+                    	  table[row * 9 + col] = '2';
+
+                        userVal = 2;
+                        sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_INPUT2, id, user, col, row, userVal);
+                        client_send_to_server(*listen_fd,send_msg);
+                        client_recv_from_server(*listen_fd,recv_msg);
+                        	str = strtok(recv_msg, token);
+                        	if(strcmp(str, SIGNAL_INPUT2) == 0){
+                        	  str = strtok(NULL, token);
+                            if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
+                              str = strtok(NULL, token); // //get column
+                              col = atoi(str);
+
+                              str = strtok(NULL, token); //get row
+                              row = atoi(str);
+                                table[row * 9 + col] = ' ';
+                                playerTurn = 0;
+                            }
+                        	}
+                        	else if(strcmp(str, SIGNAL_WIN) == 0){
+                            char result[100];
+                            char point[10];
+                            char winner[30];
+                            str = strtok(NULL, token);
+                            strcpy(point,str);
+                            str = strtok(NULL, token);
+                            strcpy(winner,str);
+                            sprintf(result,"Result: %s\n%s",point,"You win");
+                            strcpy(info,result);
+                            continue;
+                          }
+                        	else if(strcmp(str, SIGNAL_ERROR) == 0){
+                        	  str = strtok(NULL, token);
+                        	  strcpy(error, str);
+                            continue;
+                        	}
+                    	}
+                      else if(c == '3' && table[row * 9 + col] == ' '){
+                    	  table[row * 9 + col] = '3';
+
+                        userVal = 3;
+                        sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_INPUT2, id, user, col, row, userVal);
+                        client_send_to_server(*listen_fd,send_msg);
+                        client_recv_from_server(*listen_fd,recv_msg);
+                        	str = strtok(recv_msg, token);
+                        	if(strcmp(str, SIGNAL_INPUT2) == 0){
+                        	  str = strtok(NULL, token);
+                            if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
+                              str = strtok(NULL, token); // //get column
+                              col = atoi(str);
+
+                              str = strtok(NULL, token); //get row
+                              row = atoi(str);
+                                table[row * 9 + col] = ' ';
+                                playerTurn = 0;
+                            }
+                        	}
+                        	else if(strcmp(str, SIGNAL_WIN) == 0){
+                            char result[100];
+                            char point[10];
+                            char winner[30];
+                            str = strtok(NULL, token);
+                            strcpy(point,str);
+                            str = strtok(NULL, token);
+                            strcpy(winner,str);
+                            sprintf(result,"Result: %s\n%s",point,"You win");
+                            strcpy(info,result);
+                          }
+                        	else if(strcmp(str, SIGNAL_ERROR) == 0){
+                        	  str = strtok(NULL, token);
+                        	  strcpy(error, str);
+                            continue;
+                        	}
+                    	}
+                      else if(c == '4' && table[row * 9 + col] == ' '){
+                    	  table[row * 9 + col] = '4';
+
+                        userVal = 4;
+                        sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_INPUT2, id, user, col, row, userVal);
+                        client_send_to_server(*listen_fd,send_msg);
+                        client_recv_from_server(*listen_fd,recv_msg);
+                        	str = strtok(recv_msg, token);
+                        	if(strcmp(str, SIGNAL_INPUT2) == 0){
+                        	  str = strtok(NULL, token);
+                            if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
+                              str = strtok(NULL, token); // //get column
+                              col = atoi(str);
+
+                              str = strtok(NULL, token); //get row
+                              row = atoi(str);
+                                table[row * 9 + col] = ' ';
+                                playerTurn = 0;
+                            }
+                        	}
+                        	else if(strcmp(str, SIGNAL_WIN) == 0){
+                            char result[100];
+                            char point[10];
+                            char winner[30];
+                            str = strtok(NULL, token);
+                            strcpy(point,str);
+                            str = strtok(NULL, token);
+                            strcpy(winner,str);
+                            sprintf(result,"Result: %s\n%s",point,"You win");
+                            strcpy(info,result);
+                            continue;
+                          }
+                        	else if(strcmp(str, SIGNAL_ERROR) == 0){
+                        	  str = strtok(NULL, token);
+                        	  strcpy(error, str);
+                            continue;
+                        	}
+                    	}
+                      else if(c == '5' && table[row * 9 + col] == ' '){
+                    	  table[row * 9 + col] = '5';
+
+                        userVal = 5;
+                        sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_INPUT2, id, user, col, row, userVal);
+                        client_send_to_server(*listen_fd,send_msg);
+                        client_recv_from_server(*listen_fd,recv_msg);
+                        	str = strtok(recv_msg, token);
+                        	if(strcmp(str, SIGNAL_INPUT2) == 0){
+                        	  str = strtok(NULL, token);
+                            if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
+                              str = strtok(NULL, token); // //get column
+                              col = atoi(str);
+
+                              str = strtok(NULL, token); //get row
+                              row = atoi(str);
+                                table[row * 9 + col] = ' ';
+                                playerTurn = 0;
+                            }
+                        	}
+                        	else if(strcmp(str, SIGNAL_WIN) == 0){
+                            char result[100];
+                            char point[10];
+                            char winner[30];
+                            str = strtok(NULL, token);
+                            strcpy(point,str);
+                            str = strtok(NULL, token);
+                            strcpy(winner,str);
+                            sprintf(result,"Result: %s\n%s",point,"You win");
+                            strcpy(info,result);
+                            continue;
+                          }
+                        	else if(strcmp(str, SIGNAL_ERROR) == 0){
+                        	  str = strtok(NULL, token);
+                        	  strcpy(error, str);
+                            continue;
+                        	}
+                    	}
+                      else if(c == '6' && table[row * 9 + col] == ' '){
+                    	  table[row * 9 + col] = '6';
+
+                        userVal = 6;
+                        sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_INPUT2, id, user, col, row, userVal);
+                        client_send_to_server(*listen_fd,send_msg);
+                        client_recv_from_server(*listen_fd,recv_msg);
+                        	str = strtok(recv_msg, token);
+                        	if(strcmp(str, SIGNAL_INPUT2) == 0){
+                        	  str = strtok(NULL, token);
+                            if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
+                              str = strtok(NULL, token); // //get column
+                              col = atoi(str);
+
+                              str = strtok(NULL, token); //get row
+                              row = atoi(str);
+                                table[row * 9 + col] = ' ';
+                                playerTurn = 0;
+                            }
+                        	}
+                        	else if(strcmp(str, SIGNAL_WIN) == 0){
+                            char result[100];
+                            char point[10];
+                            char winner[30];
+                            str = strtok(NULL, token);
+                            strcpy(point,str);
+                            str = strtok(NULL, token);
+                            strcpy(winner,str);
+                            sprintf(result,"Result: %s\n%s",point,"You win");
+                            strcpy(info,result);
+                            continue;
+                          }
+                        	else if(strcmp(str, SIGNAL_ERROR) == 0){
+                        	  str = strtok(NULL, token);
+                        	  strcpy(error, str);
+                            continue;
+                        	}
+                    	}
+                      else if(c == '7' && table[row * 9 + col] == ' '){
+                    	  table[row * 9 + col] = '7';
+
+                        userVal = 7;
+                        sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_INPUT2, id, user, col, row, userVal);
+                        client_send_to_server(*listen_fd,send_msg);
+                        client_recv_from_server(*listen_fd,recv_msg);
+                        	str = strtok(recv_msg, token);
+                        	if(strcmp(str, SIGNAL_INPUT2) == 0){
+                        	  str = strtok(NULL, token);
+                            if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
+                              str = strtok(NULL, token); // //get column
+                              col = atoi(str);
+
+                              str = strtok(NULL, token); //get row
+                              row = atoi(str);
+                                table[row * 9 + col] = ' ';
+                                playerTurn = 0;
+                            }
+                        	}
+                        	else if(strcmp(str, SIGNAL_WIN) == 0){
+                            char result[100];
+                            char point[10];
+                            char winner[30];
+                            str = strtok(NULL, token);
+                            strcpy(point,str);
+                            str = strtok(NULL, token);
+                            strcpy(winner,str);
+                            sprintf(result,"Result: %s\n%s",point,"You win");
+                            strcpy(info,result);
+                            continue;
+                          }
+                        	else if(strcmp(str, SIGNAL_ERROR) == 0){
+                        	  str = strtok(NULL, token);
+                        	  strcpy(error, str);
+                            continue;
+                        	}
+                    	}
+                      else if(c == '8' && table[row * 9 + col] == ' '){
+                    	  table[row * 9 + col] = '8';
+
+                        userVal = 8;
+                        sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_INPUT2, id, user, col, row, userVal);
+                        client_send_to_server(*listen_fd,send_msg);
+                        client_recv_from_server(*listen_fd,recv_msg);
+                        	str = strtok(recv_msg, token);
+                        	if(strcmp(str, SIGNAL_INPUT2) == 0){
+                        	  str = strtok(NULL, token);
+                            if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
+                              str = strtok(NULL, token); // //get column
+                              col = atoi(str);
+
+                              str = strtok(NULL, token); //get row
+                              row = atoi(str);
+                                table[row * 9 + col] = ' ';
+                                playerTurn = 0;
+                            }
+                        	}
+                        	else if(strcmp(str, SIGNAL_WIN) == 0){
+                            char result[100];
+                            char point[10];
+                            char winner[30];
+                            str = strtok(NULL, token);
+                            strcpy(point,str);
+                            str = strtok(NULL, token);
+                            strcpy(winner,str);
+                            sprintf(result,"Result: %s\n%s",point,"You win");
+                            strcpy(info,result);
+                            continue;
+                          }
+                        	else if(strcmp(str, SIGNAL_ERROR) == 0){
+                        	  str = strtok(NULL, token);
+                        	  strcpy(error, str);
+                        	}
+                    	}
+                      else if(c == '9' && table[row * 9 + col] == ' '){
+                    	  table[row * 9 + col] = '9';
+
+                        userVal = 9;
+                        sprintf(send_msg, "%s#%s#%s#%d#%d#%d", SIGNAL_INPUT2, id, user, col, row, userVal);
+                        client_send_to_server(*listen_fd,send_msg);
+                        client_recv_from_server(*listen_fd,recv_msg);
+                        	str = strtok(recv_msg, token);
+                        	if(strcmp(str, SIGNAL_INPUT2) == 0){
+                        	  str = strtok(NULL, token);
+                            if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
+                                str = strtok(NULL, token); // //get column
+                                col = atoi(str);
+
+                                str = strtok(NULL, token); //get row
+                                row = atoi(str);
+                                table[row * 9 + col] = ' ';
+                                playerTurn = 0;
+                            }
+                        	}
+                        	else if(strcmp(str, SIGNAL_WIN) == 0){
+                            char result[100];
+                            char point[10];
+                            char winner[30];
+                            str = strtok(NULL, token);
+                            strcpy(point,str);
+                            str = strtok(NULL, token);
+                            strcpy(winner,str);
+                            sprintf(result,"Result: %s\n%s",point,"You win");
+                            strcpy(info,result);
+                            continue;
+                          }
+                        	else if(strcmp(str, SIGNAL_ERROR) == 0){
+                        	  str = strtok(NULL, token);
+                        	  strcpy(error, str);
+                            continue;
+                        	}
+                    	}
+                    	else if(c == 'q'){
+                        strcpy(info, INFO_QUIT);
+                        continue;
+                      }
+
+                    }
+                  }
+                  else {
+                      client_recv_from_server(*listen_fd,recv_msg);
+                      str = strtok(recv_msg, token);
+                      if(strcmp(str, SIGNAL_INPUT2) == 0){
+                        str = strtok(NULL, token);
+                        if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
+                            str = strtok(NULL, token); // //get column
+                            col = atoi(str);
+
+                            str = strtok(NULL, token); //get row
+                            row = atoi(str);
+                            table[row * 9 + col] = ' ';
+                            playerTurn = 1;
+                        }else if(strcmp(str, SIGNAL_CHECK_TRUE) == 0){
+                          str = strtok(NULL, token); // //get column
+                          col = atoi(str);
+
+                          str = strtok(NULL, token); //get row
+                          row = atoi(str);
+
+                          str = strtok(NULL, token); //get row
+
+                          table[row * 9 + col] = str[0];
+                        }
+                      }
+                      else if(strcmp(str, SIGNAL_WIN) == 0){
+                        char result[100];
+                        char point[10];
+                        char winner[30];
+                        str = strtok(NULL, token);
+                        strcpy(point,str);
+                        str = strtok(NULL, token);
+                        strcpy(winner,str);
+                        strcpy(info,"You lose!");
+                        str = strtok(NULL, token); // //get column
+                        col = atoi(str);
+
+                        str = strtok(NULL, token); //get row
+                        row = atoi(str);
+
+                        str = strtok(NULL, token); //get row
+
+                        table[row * 9 + col] = str[0];
+                        playerTurn=1;
+
+                        continue;
+                      }
+                      else if(strcmp(str, SIGNAL_ERROR) == 0){
+                        str = strtok(NULL, token);
+                        strcpy(error, str);
+                        continue;
+                      }
+                  }
+                  // if(strcmp(user,firstPlayer) == 0)
+                  //     playerTurn = 1;
+                  // else
+                  //     playerTurn = 0;
+
+                }
+                setNormalTerminal();
+            }
+          }
+          out:
+          free(table);
+          table = NULL;
           status = STATUS_HARDGAME_MENU;
         }
         else if(checkStatus == 3){
@@ -758,7 +1266,7 @@ int client_create_socket(int *listen_fd) {
 //Receive data from server
 int client_recv_from_server(int client_socket, char *recv_msg) {
      int read_bytes = 0;
-
+     memset(recv_msg, 0 ,sizeof(recv_msg));
      if((read_bytes = recv(client_socket, recv_msg, BUFF_SIZE, 0)) > 0) {
             printf("%s\n",recv_msg);
     }
@@ -812,22 +1320,28 @@ int client_select(int max_fd,int listen_fd, fd_set *readfds, fd_set *writefds) {
         perror("ERROR: select");
         exit(0);
     }
-
-     if(FD_ISSET(listen_fd,readfds)) {
-        client_recv_from_server(listen_fd,recv_msgg);
-    }
-
-     if(FD_ISSET(STDIN_FILENO,readfds)) {
-         if(read(0,send_buff,sizeof(send_buff))>0) {
-           send_buff[strlen(send_buff)-1] = '\0';
-           if(strcmp(send_buff,":q") != 0)
-                client_send_to_server(listen_fd,send_buff);
-           else{
-             return -1;
-           }
-        }
-
-    }
+    scanf("%s\n",send_buff );
+    printf("%s\n",send_buff );
+    send(listen_fd, send_buff, strlen(send_buff), 0);
+    // client_send_to_server(listen_fd,send_buff);
+    client_recv_from_server(listen_fd,recv_msgg);
+    //  if(FD_ISSET(listen_fd,readfds)) {
+    //     client_recv_from_server(listen_fd,recv_msgg);
+    // }
+    //
+    //
+    //
+    //  if(FD_ISSET(STDIN_FILENO,readfds)) {
+    //     if(read(0,send_buff,sizeof(send_buff))>0) {
+    //
+    //       send_buff[strlen(send_buff)-1] = '\0';
+    //       if(strcmp(send_buff,":q") != 0)
+    //            client_send_to_server(listen_fd,send_buff);
+    //       else{
+    //         return -1;
+    //       }
+    //    }
+    // }
 
     return 0;
 }

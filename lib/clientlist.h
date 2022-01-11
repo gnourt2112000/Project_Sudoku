@@ -6,6 +6,7 @@ typedef struct _ClientInfo{
   char user[100];
   char address[20];
   char* table;
+  int count;
   char logfile[100];
   struct _ClientInfo* next;
 }ClientInfo;

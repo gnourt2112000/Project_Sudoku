@@ -32,8 +32,6 @@ ClientInfo* newInfo(char* id, char user[], char addr[], char logfile[]){
   strcpy(info->user, user);
   strcpy(info->address, addr);
   info->table = (char*)malloc(81);
-  for(i = 0; i < 81; i++)
-    (info->table)[i] = 0;
   strcpy(info->logfile, logfile);
   info->next = NULL;
 }

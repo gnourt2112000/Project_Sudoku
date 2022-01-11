@@ -3,22 +3,21 @@
 #include <stdbool.h>
 #include "solvesudoku.h"
 
-int** createPuzzle(char* arrayPuzzle){
+char* createPuzzle(char* arrayPuzzle){
     int i, j,k=0;
-    int** puzzle;
+    char* puzzle;
 
-    puzzle = (int**)malloc(sizeof(int*) * 9);
+    puzzle = malloc(81);
 
     for (i = 0; i < 9; i++){
-        puzzle[i] = (int*)malloc(sizeof(int) * 9);
         for(j = 0; j < 9; j++){
-            puzzle[i][j] = arrayPuzzle[k++]-48;
+            puzzle[i*9 + j] = arrayPuzzle[k++];
         }
     }
     return puzzle;
 }
 
-void printPuzzle(int** puzzle){
+void printPuzzle(char* puzzle){
     int i, j, a;
 
     printf("\n");
@@ -30,7 +29,7 @@ void printPuzzle(int** puzzle){
                 printf(" %d |", a);
             else if ((j) % 3 == 0)
                 printf("|");
-            printf(" %d ", puzzle[i][j]);
+            printf(" %c ", puzzle[i*9+j]);
             if (j == 8)
                 printf("|");
         }
@@ -41,12 +40,12 @@ void printPuzzle(int** puzzle){
     printf(" Y\n");
 }
 
-bool checkAvailable(int** puzzle, int* row, int* column){
+bool checkAvailable(char* puzzle, int* row, int* column){
     int i, j;
 
     for (i = 0; i < 9; i++){
         for(j = 0; j < 9; j++){
-            if (puzzle[i][j] == 0){
+            if (puzzle[i*9+j] == 0+'0'){
                 *row = i;
                 *column  = j;
                 return true;
@@ -57,19 +56,19 @@ bool checkAvailable(int** puzzle, int* row, int* column){
     return false;
 }
 
-bool checkBox(int** puzzle, int row, int column, int val){
+bool checkBox(char* puzzle, int row, int column, int val){
     int i, j;
     int squareRow, squareColumn;
 
     //CHECK VERTICAL
     for(i = 0; i < 9; i++){
-        if (puzzle[i][column] == val)
+        if (puzzle[i*9+column] == val+'0')
             return false;
     }
 
     //CHECK HORIZONTAL
     for(j = 0; j < 9; j++){
-        if (puzzle[row][j] == val)
+        if (puzzle[row*9+j] == val+'0')
             return false;
     }
 
@@ -79,7 +78,7 @@ bool checkBox(int** puzzle, int row, int column, int val){
 
     for(i = 0; i < 3; i++){
         for(j = 0; j < 3; j++){
-            if(puzzle[squareRow + i][squareColumn + j] == val)
+            if(puzzle[(squareRow + i)*9+squareColumn + j] == val+'0')
                 return false;
         }
     }
@@ -87,54 +86,53 @@ bool checkBox(int** puzzle, int row, int column, int val){
     return true;
 }
 
-bool solvePuzzle(int** puzzle){
+bool solvePuzzle(char* puzzle){
     int i, j, val;
 
     if(!checkAvailable(puzzle, &i, &j))
         return true;
 
     for(val = 1; val < 10; val++){
-        if(checkBox(puzzle, i, j, val)){
-            puzzle[i][j] = val;
+        if(checkBox(puzzle, i, j, val+'0')){
+            puzzle[i*9+j] = val+'0';
             if(solvePuzzle(puzzle))
                 return true;
             else
-                puzzle[i][j] = 0;
+                puzzle[i*9+j] = 0;
         }
     }
     return false;
 }
 
-int** copyPuzzle(int** puzzle){
+char* copyPuzzle(char* puzzle){
     int i, j;
-    int** newPuzzle;
+    char* newPuzzle;
 
-    newPuzzle = (int**)malloc(sizeof(int*) * 9);
+    newPuzzle = malloc(81);
     for (i = 0; i < 9; i++){
-        newPuzzle[i] = (int*)malloc(sizeof(int) * 9);
         for(j = 0; j < 9; j++){
-            newPuzzle[i][j] = puzzle[i][j];
+            newPuzzle[i*9+j] = puzzle[i*9+j];
         }
     }
     return newPuzzle;
 }
 
-void userChoice(int** userPuzzle, int** tempPuzzle, int positionY, int positionX, int userVal){
+void userChoice(char* userPuzzle, char* tempPuzzle, int positionY, int positionX, int userVal){
     int i,j;
     if(checkBox(userPuzzle, positionY, positionX, userVal))
-        userPuzzle[positionY][positionX] = userVal;
+        userPuzzle[positionY*9+positionX] = userVal+'0';
     else
         printf("\nincorrect value for the X = %d Y = %d coordinate, please try again\n",positionX + 1, positionY + 1);
 
     for (i = 0; i < 9; i++){
         for(j = 0; j < 9; j++){
-            tempPuzzle[i][j] = userPuzzle[i][j];
+            tempPuzzle[i*9+j] = userPuzzle[i*9+j];
         }
     }
 
     if(!solvePuzzle(tempPuzzle)){
         printf("\nincorrect value for the X = %d Y = %d coordinate, please try again\n",positionX + 1, positionY + 1);
-        userPuzzle[positionY][positionX] = 0;
+        userPuzzle[positionY*9+positionX] = 0+'0';
     }
     getchar();
     printPuzzle(userPuzzle);

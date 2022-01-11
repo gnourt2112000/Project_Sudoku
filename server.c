@@ -24,7 +24,6 @@
 #define MAX_NAME_SZE 20
 #define NO_OF_CLIENTS 10
 #define MAX_BUFFER_SIZE 1024
-#define CONNECT_CLIENT_TO_CHAT "Please connect to the client to chat"
 #define CONNECTED "Connected ....."
 
 
@@ -38,9 +37,9 @@
 // sudoku game
 #define SIGNAL_NEWGAME "SIGNAL_NEWGAME"
 #define SIGNAL_2PLAYERS "SIGNAL_2PLAYERS"
-#define SIGNAL_CHAT "SIGNAL_CHAT"
 #define SIGNAL_ABORTGAME "SIGNAL_ABORTGAME"
 #define SIGNAL_INPUT "SIGNAL_INPUT"
+#define SIGNAL_INPUT2 "SIGNAL_INPUT2"
 #define SIGNAL_CHECK_FALSE "SIGNAL_CHECK_FALSE"
 #define SIGNAL_CHECK_TRUE "SIGNAL_CHECK_TRUE"
 #define SIGNAL_WIN "SIGNAL_WIN"
@@ -68,8 +67,8 @@ typedef struct sudoku
 //Data structure
 struct client {
     char cname[MAX_NAME_SZE];
-    char chatwith[MAX_NAME_SZE];
-    int chatwith_fd;
+    char playwith[MAX_NAME_SZE];
+    int playwith_fd;
     int file_des;
     int port;
     char ip[INET_ADDRSTRLEN];
@@ -86,9 +85,9 @@ char send_msg[BUFF_SIZE] , recv_msg[BUFF_SIZE];
 char token[] ="#";
 char game[82];
 // int tttResult;
-int** puzzle = NULL;
-int** userPuzzle = NULL;
-int** tempPuzzle = NULL;
+char* puzzle = NULL;
+char* tempPuzzle = NULL;
+char* userPuzzle = NULL;
 int result;
 int count;
 int r;
@@ -127,7 +126,7 @@ void updateRanking( char* user, int result){
   rootRank = NULL; cur = NULL; new = NULL; tmp = NULL;
 }
 
-void initSudoku(){
+char* initSudoku(){
   Sudoku sudoku[100];
   FILE *f = fopen("data/sudokuData.txt","r");
   int total_data = 0;
@@ -146,6 +145,7 @@ void initSudoku(){
   result = 3;
   count = 1;
   strcpy(game,sudoku[0].data);
+  return puzzle;
 
 }
 
@@ -194,7 +194,7 @@ int server_create_socket(int *listen_fd) {
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SERVER_PORT);
-    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 
     if( 0!=bind(*listen_fd,(struct sockaddr*)&server_addr,sizeof(struct sockaddr))){
          perror("ERROR : socket bind failed");
@@ -306,7 +306,8 @@ int server_select(int max_fd,int listen_fd, fd_set *readfds, fd_set *writefds) {
            send(new_socket_fd, send_buff ,strlen(send_buff), 0);
          } else{
            registerUser(user, pass);
-           sprintf(send_msg, SIGNAL_OK);
+           memset(send_buff, 0 ,sizeof(send_buff));
+           sprintf(send_buff,"%s", SIGNAL_OK);
            server_add_new_client(client_addr ,new_socket_fd,user);
            send(new_socket_fd, send_buff, strlen(send_buff), 0);
            goto out;
@@ -401,12 +402,17 @@ void server_add_new_client(struct sockaddr_in client_info, int new_socket_fd, ch
 
 //processing the received data from clients
 int process_recv_data(int socket,char*buffer) {
-    char chat_c[MAX_BUFFER_SIZE];
+    char play_c[MAX_BUFFER_SIZE];
     char buffer_send[MAX_BUFFER_SIZE] = {0};
     int index_sender = 0;
     int index_receiver = 0;
     int len = 0;
     index_sender = find_the_client_index_list(socket);
+    char *user, *pass, *id;
+    int recieved, col, row, userVal;
+    ClientInfo *info;
+    memset(send_msg,0,sizeof(send_msg));
+    str = strtok( buffer, token);
 
     if(strncmp(buffer, "LIST",4) ==0) {
          memset(buffer,0,sizeof(buffer));
@@ -419,29 +425,41 @@ int process_recv_data(int socket,char*buffer) {
     }
     if(strncmp(buffer, "CONNECT",7) == 0) {
 
-        sscanf(buffer,"%*[^:]:%s",chat_c);
-        strcpy(server.client_list[index_sender].chatwith, chat_c);
+        sscanf(buffer,"%*[^:]:%s",play_c);
+        strcpy(server.client_list[index_sender].playwith, play_c);
 
-        index_receiver = find_the_client_index_by_name(server.client_list[index_sender].chatwith);
-        server.client_list[index_sender].chatwith_fd = server.client_list[index_receiver].file_des;
-        server_send_to_client(server.client_list[index_sender].file_des,CONNECTED);
+        index_receiver = find_the_client_index_by_name(server.client_list[index_sender].playwith);
+        server.client_list[index_sender].playwith_fd = server.client_list[index_receiver].file_des;
+        // server_send_to_client(server.client_list[index_sender].file_des,CONNECTED);
+        for(int i = 0;i!= index_sender && i<server.total_client; i++) {
+               if(server.client_list[i].playwith_fd == server.client_list[index_sender].file_des) {
+
+
+                   initSudoku();
+                   id = addInfo(inet_ntoa(client_addr.sin_addr), server.client_list[index_sender].cname); //get id game
+                   printf(" game with id = %s\n", id);
+                   printf(" Game Info: ");
+                   printInfo( getInfo(id) );
+                   sprintf( send_msg,"%s#%s#%s#%s", SIGNAL_OK, id, game,server.client_list[index_sender].cname);
+                   server_send_to_client(server.client_list[index_sender].playwith_fd,send_msg);
+                   server_send_to_client(socket,send_msg);
+                   break;
+               }
+        }
         goto out;
     }
-    char *user, *pass, *id;
-    int recieved, col, row, userVal;
-    ClientInfo *info;
-    memset(send_msg,0,sizeof(send_msg));
-    str = strtok( buffer, token);
+
     if(strcmp(str, SIGNAL_NEWGAME) == 0){
       // Play new game
 
-      initSudoku();
+
       str = strtok(NULL, token); //get user
       id = addInfo(inet_ntoa(client_addr.sin_addr), str); //get id game
       printf(" game with id = %s\n", id);
       printf(" Game Info: ");
       printInfo( getInfo(id) );
-      sprintf( send_msg,"%s#%s#%s", SIGNAL_OK, id, game);
+      strcpy(getInfo(id)->table,initSudoku());
+      sprintf( send_msg,"%s#%s#%s", SIGNAL_OK, id, getInfo(id)->table);
       server_send_to_client(socket,send_msg);
       goto out;
       // send( socket, send_msg, strlen(send_msg), 0);
@@ -493,7 +511,7 @@ int process_recv_data(int socket,char*buffer) {
         count = 1;
         for (i = 0; i < 9; i++){
             for(j = 0; j < 9; j++){
-                if (userPuzzle[i][j] != 0){
+                if (info->table[i*9+j] != 0 + '0'){
                     count++;
                 }
             }
@@ -501,19 +519,19 @@ int process_recv_data(int socket,char*buffer) {
         printf("%d\n",count);
         if(count <= 81){
             int check = 0;
-            if(checkBox(userPuzzle, row, col, userVal))
-                userPuzzle[row][col] = userVal;
+            if(checkBox(info->table, row, col, userVal))
+                info->table[row*9+col] = userVal;
             else{
                 check = 1;
                 result--;
             }
             for (i = 0; i < 9; i++){
                 for(j = 0; j < 9; j++){
-                    tempPuzzle[i][j] = userPuzzle[i][j];
+                    tempPuzzle[i*9+j] = info->table[i*9+j];
                 }
             }
             if(!solvePuzzle(tempPuzzle)){
-                userPuzzle[row][col] = 0;
+                info->table[row*9+col] = 0+'0';
                 check = 1;
                 result--;
             }
@@ -522,6 +540,7 @@ int process_recv_data(int socket,char*buffer) {
               server_send_to_client(socket,send_msg);
             }else{
               if(count == 81){
+                count =1;
                 printf("Player win\n");
                 updateRanking(user, result);
                 sprintf(send_msg, "%s#%d", SIGNAL_WIN,result);
@@ -529,6 +548,76 @@ int process_recv_data(int socket,char*buffer) {
               }else{
                 sprintf(send_msg, "%s#%s", SIGNAL_INPUT,SIGNAL_CHECK_TRUE);
                 server_send_to_client(socket,send_msg);
+              }
+            }
+        }
+      }
+      else{
+        printf("Request a turn of game with id = %s REQUEST FAILED!\n", id);
+        sprintf(send_msg, "%s#%s%s%s", SIGNAL_ERROR, "Game with id=", id, "not existed");
+        server_send_to_client(socket,send_msg);
+      }
+      goto out;
+    }
+    else if(strcmp(str, SIGNAL_INPUT2) == 0){
+      // Quay về server để xử lí game sudoku
+      id = strtok(NULL, token); // get game id
+      user = strtok(NULL, token); // get user name
+
+      str = strtok(NULL, token); // //get column
+      col = atoi(str);
+
+      str = strtok(NULL, token); //get row
+      row = atoi(str);
+
+      str = strtok(NULL, token); //get row
+      userVal = atoi(str);
+      printf("Received a turn of game id = %s, user = %s : column = %d, row = %d userVal = %d\n", id, user, col, row, userVal);
+      // set table
+      info = getInfo(id);
+      if(info != NULL){
+
+        int i,j;
+        count = 1;
+        for (i = 0; i < 9; i++){
+            for(j = 0; j < 9; j++){
+                if (userPuzzle[i*9+j] != 0+'0'){
+                    count++;
+                }
+            }
+        }
+        printf("%d\n",count);
+        if(count <= 81){
+            int check = 0;
+            if(checkBox(userPuzzle, row, col, userVal))
+                userPuzzle[row*9+col] = userVal;
+            else{
+                check = 1;
+            }
+            for (i = 0; i < 9; i++){
+                for(j = 0; j < 9; j++){
+                    tempPuzzle[i*9+j] = userPuzzle[i*9+j];
+                }
+            }
+            if(!solvePuzzle(tempPuzzle)){
+                userPuzzle[row*8+col] = 0+'0';
+                check = 1;
+            }
+            if(check == 1){
+              sprintf(send_msg, "%s#%s#%d#%d#%d", SIGNAL_INPUT2,SIGNAL_CHECK_FALSE,col,row,userVal);
+              server_send_to_client(socket,send_msg);
+              server_send_to_client(server.client_list[index_sender].playwith_fd,send_msg);
+            }else{
+              if(count == 81){
+                printf("Player win\n");
+                updateRanking(user, result);
+                sprintf(send_msg, "%s#%d#%s#%d#%d#%d", SIGNAL_WIN,10,user,col,row,userVal);
+                server_send_to_client(socket,send_msg);
+                server_send_to_client(server.client_list[index_sender].playwith_fd,send_msg);
+              }else{
+                sprintf(send_msg, "%s#%s#%d#%d#%d", SIGNAL_INPUT2,SIGNAL_CHECK_TRUE,col,row,userVal);
+                server_send_to_client(socket,send_msg);
+                server_send_to_client(server.client_list[index_sender].playwith_fd,send_msg);
               }
             }
         }
@@ -575,11 +664,13 @@ int process_recv_data(int socket,char*buffer) {
       goto out;
     }
 
-    if(strlen(server.client_list[index_sender].chatwith) != 0){
+    if(strlen(server.client_list[index_sender].playwith) != 0){
         snprintf(buffer_send,sizeof(buffer_send),"[%s] : %s",server.client_list[index_sender].cname,buffer);
         printf("Buffer  =%s\n",buffer_send);
-        server_send_to_client(server.client_list[index_sender].chatwith_fd,buffer_send);
+        server_send_to_client(server.client_list[index_sender].playwith_fd,buffer_send);
     }
+
+
 
 out:
     return 0;

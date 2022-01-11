@@ -1,7 +1,7 @@
-int** createPuzzle();
-void printPuzzle(int** puzzle);
-bool checkAvailable(int** puzzle, int* row, int* column);
-bool checkBox(int** puzzle, int row, int column, int val);
-bool solvePuzzle(int** puzzle);
-int** copyPuzzle(int** puzzle);
-void userChoice(int** userPuzzle, int** tempPuzzle,int positionY, int positionX, int userVal);
+char* createPuzzle();
+void printPuzzle(char* puzzle);
+bool checkAvailable(char* puzzle, int* row, int* column);
+bool checkBox(char* puzzle, int row, int column, int val);
+bool solvePuzzle(char* puzzle);
+char* copyPuzzle(char* puzzle);
+void userChoice(char* userPuzzle, char* tempPuzzle,int positionY, int positionX, int userVal);
