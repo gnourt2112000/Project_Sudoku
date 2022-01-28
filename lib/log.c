@@ -19,6 +19,7 @@ void printLog(char *logFile){
   fclose(f);
 }
 
+
 /*
 Ghi vào file log
 */

@@ -50,9 +50,9 @@ void to_free(node* rootRank){ // giai phong list
   }
 }
 
-void readFileRanking(){
+void readFileRanking(char *filename){
   FILE *f;
-  f = fopen("data/ranking.txt", "r");
+  f = fopen(filename, "r");
   if(f==NULL){// check file
     printf("Cannot open file ranking.txt!!!\n");
     return;

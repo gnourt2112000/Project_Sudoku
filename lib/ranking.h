@@ -24,7 +24,7 @@ void traversingList();
 
 void to_free(node* rootRank);
 
-void readFileRanking();
+void readFileRanking(char* filename);
 
 void updateFileRanking();
 
