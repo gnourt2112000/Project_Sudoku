@@ -48,7 +48,7 @@
 #define SIGNAL_CHECK_TRUE "SIGNAL_CHECK_TRUE"
 #define SIGNAL_LIST "LIST"
 #define SIGNAL_CONNECT "CONNECT"
-#define SIGNAL_NOT_FOUND "NOT FOUND"
+#define SIGNAL_CAN_NOT_CONNECT "CAN'T CONNECT"
 // show info
 #define INFO_QUIT "Quit game (y or n)?"
 #define INFO_WIN "You Win. Do you want to view log (y or n)?"
@@ -240,7 +240,7 @@ int menuStart(int listen_fd){
         return -1;
     }
     else if(choice == '3') {
-      close(listen_fd);
+      client_send_to_server(listen_fd,SIGNAL_CLOSE);
       exit(-1);
     }
     else sprintf(error,"No option %c", choice);
@@ -699,10 +699,12 @@ void handleGame2Players(int listen_fd){
       printf("%s\n","Syntax error" );
       continue;
     }
-    if(strcmp(recv_msg,SIGNAL_NOT_FOUND)==0){
-      printf("%s\n","Not found" );
+    if(strcmp(recv_msg,SIGNAL_CAN_NOT_CONNECT)==0){
+      printf("%s\n","Can not connect" );
       continue;
     }
+
+    printf("%s\n","Connecting..." );
 
 
     error[0] = '\0';

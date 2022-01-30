@@ -48,7 +48,7 @@
 #define SIGNAL_LOGLINE "SIGNAL_LOGLINE"
 #define SIGNAL_LIST "LIST"
 #define SIGNAL_CONNECT "CONNECT"
-#define SIGNAL_NOT_FOUND "NOT FOUND"
+#define SIGNAL_CAN_NOT_CONNECT "CAN'T CONNECT"
 
 // sudoku ranking
 #define SIGNAL_RANKING "SIGNAL_RANKING"
@@ -105,7 +105,7 @@ int server_send_to_client(int socket_client, char *send_msg);
 int server_build_fdsets(int listenfd, fd_set *readfds, fd_set *writefds, fd_set *exceptfds);
 int server_select(int max_fd, int listenfd, fd_set *readfds, fd_set *writefds);
 void server_delete_client(int socket_fd_del);
-void server_add_new_client(struct sockaddr_in client_info, int new_socket_fd,char*buffer);
+void server_add_new_client(struct sockaddr_in client_info, int new_socket_fd,char*buffer, char* ip, int port);
 int process_recv_data(int socket,char*buffer);
 int find_the_client_index_list(int socket);
 int find_the_client_index_by_name(char*name);
@@ -221,7 +221,9 @@ int server_recv_from_client(int client_socket, char *recv_msg) {
     memset(recv_msg,0,strlen(recv_msg));
 
     if((read_bytes = recv(client_socket, recv_msg, MAX_BUFFER_SIZE, 0)) > 0) {
-            process_recv_data(client_socket, recv_msg);
+        printf("\n[CLIENT : %d => SERVER] || Wrote [%d] number of bytes || BYTES = [%s]\n",client_socket,read_bytes,recv_msg);
+        process_recv_data(client_socket, recv_msg);
+
     }
     else if(read_bytes == 0) {
            printf("Client Disconnected\n");
@@ -237,7 +239,7 @@ int server_send_to_client(int client_socket, char *send_msg) {
     int write_bytes = 0;
     int len  =strlen(send_msg);
     if((write_bytes = send(client_socket, send_msg, len, 0)) > 0) {
-            printf("\n[CLIENT : %d] || Wrote [%d] number of bytes || BYTES = [%s]\n",client_socket,write_bytes, send_msg);
+            printf("\n[SERVER => CLIENT : %d] || Wrote [%d] number of bytes || BYTES = [%s]\n",client_socket,write_bytes, send_msg);
     }
     else {
             perror("Error : send failed");
@@ -292,13 +294,22 @@ int server_select(int max_fd,int listen_fd, fd_set *readfds, fd_set *writefds) {
            return -1;
        }
 
+       char ip[INET_ADDRSTRLEN] = {0};
+       int port = ntohs(client_addr.sin_port);
+       inet_ntop(AF_INET, &(client_addr.sin_addr), ip, INET_ADDRSTRLEN);
+       printf("[CLIENT-INFO] : [port = %d , ip = %s]\n",port, ip);
+
+       if(server.total_client >=NO_OF_CLIENTS) {
+           perror("ERROR : no more space for client to save");
+       }
+
        while(1){
          memset(recv_msgg, 0 ,sizeof(recv_msgg));
 
        //server_recv_from_client(new_socket_fd,recv_msgg);
-       recv(new_socket_fd, recv_msgg, MAX_BUFFER_SIZE, 0);
+       int read_bytes = recv(new_socket_fd, recv_msgg, MAX_BUFFER_SIZE, 0);
 
-       printf("%s\n",recv_msgg);
+       printf("\n[CLIENT : %d => SERVER] || Wrote [%d] number of bytes || BYTES = [%s]\n",new_socket_fd,read_bytes,recv_msgg);
        char *user, *pass;
        str = strtok( recv_msgg, token);
 
@@ -309,13 +320,15 @@ int server_select(int max_fd,int listen_fd, fd_set *readfds, fd_set *writefds) {
 
          if(isValid(user, NULL)){
            sprintf(send_buff,"%s#%s",SIGNAL_ERROR, "Account existed");
-           send(new_socket_fd, send_buff ,strlen(send_buff), 0);
+           // send(new_socket_fd, send_buff ,strlen(send_buff), 0);
+           server_send_to_client(new_socket_fd,send_buff);
          } else{
            registerUser(user, pass);
            memset(send_buff, 0 ,sizeof(send_buff));
            sprintf(send_buff,"%s", SIGNAL_OK);
-           server_add_new_client(client_addr ,new_socket_fd,user);
-           send(new_socket_fd, send_buff, strlen(send_buff), 0);
+           server_add_new_client(client_addr ,new_socket_fd,user,ip,port);
+           // send(new_socket_fd, send_buff, strlen(send_buff), 0);
+           server_send_to_client(new_socket_fd,send_buff);
            goto out;
          }
 
@@ -328,18 +341,22 @@ int server_select(int max_fd,int listen_fd, fd_set *readfds, fd_set *writefds) {
          if(isValid(user, pass)) {
            memset(send_buff, 0 ,sizeof(send_buff));
            sprintf(send_buff, "%s",SIGNAL_OK);
-           server_add_new_client(client_addr ,new_socket_fd,user);
-           send(new_socket_fd, send_buff, strlen(send_buff), 0);
-           printf("%s\n",send_buff );
+           server_add_new_client(client_addr ,new_socket_fd,user,ip,port);
+           // send(new_socket_fd, send_buff, strlen(send_buff), 0);
+           server_send_to_client(new_socket_fd,send_buff);
            goto out;
          }
          else{
            sprintf( send_buff,"%s#%s", SIGNAL_ERROR, "Username or Password is incorrect");
-           send(new_socket_fd, send_buff, strlen(send_buff), 0);
+           // send(new_socket_fd, send_buff, strlen(send_buff), 0);
+           server_send_to_client(new_socket_fd,send_buff);
          }
 
-       }else if( strcmp(str, SIGNAL_CLOSE) == 0){
-          return 0;
+       }
+       else{
+         printf("Socket deleted  = [%d]\n",new_socket_fd);
+         close(new_socket_fd);
+         return 0;
        }
      }
 
@@ -382,20 +399,8 @@ void server_delete_client(int socket_fd_del) {
 }
 
 //Adding a new client to the server
-void server_add_new_client(struct sockaddr_in client_info, int new_socket_fd, char*buffer) {
-    char ip[INET_ADDRSTRLEN] = {0};
-    // char buffer[MAX_BUFFER_SIZE] = {0};
-//get extra server details
+void server_add_new_client(struct sockaddr_in client_info, int new_socket_fd, char*buffer, char* ip,int port) {
 
-
-//get the IP and Port client details
-    int port = ntohs(client_info.sin_port);
-    inet_ntop(AF_INET, &(client_info.sin_addr), ip, INET_ADDRSTRLEN);
-    printf("[CLIENT-INFO] : [port = %d , ip = %s]\n",port, ip);
-
-    if(server.total_client >=NO_OF_CLIENTS) {
-        perror("ERROR : no more space for client to save");
-    }
 //populate the new client data
     strncpy(server.client_list[server.total_client].cname ,buffer,strlen(buffer));
     server.client_list[server.total_client].port = port;
@@ -435,7 +440,7 @@ int process_recv_data(int socket,char*buffer) {
 
         sscanf(buffer,"%*[^:]:%s",play_c);
         if(find_the_client_index_by_name(play_c) == -1 || strcmp(server.client_list[index_sender].cname,play_c)==0){
-          server_send_to_client(socket,SIGNAL_NOT_FOUND);
+          server_send_to_client(socket,SIGNAL_CAN_NOT_CONNECT);
           goto out;
         }
         strcpy(server.client_list[index_sender].playwith, play_c);
