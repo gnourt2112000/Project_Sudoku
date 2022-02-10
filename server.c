@@ -200,7 +200,8 @@ int server_create_socket(int *listen_fd) {
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SERVER_PORT);
-    server_addr.sin_addr.s_addr = inet_addr("172.16.0.20");
+    // server_addr.sin_addr.s_addr = inet_addr("192.168.1.9");
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if( 0!=bind(*listen_fd,(struct sockaddr*)&server_addr,sizeof(struct sockaddr))){
          perror("ERROR : socket bind failed");

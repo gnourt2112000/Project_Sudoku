@@ -77,7 +77,7 @@ int playerTurn, col, row, userVal;
 int checkStatus;
 
 //Function declaration
-int client_create_socket(int *listen_fd);
+int client_create_socket(int *listen_fd,char *seraddr);
 int client_recv_from_server(int socket_client, char *recv_msg);
 int client_send_to_server(int socket_client, char *send_msg);
 
@@ -441,6 +441,12 @@ int viewLog(int listen_fd){
       str[strlen(str) - 4] = '\0';
       printf("- Time: %s\n", str);
       str = strtok(NULL,token);
+      printf("%s",str );
+      printf("Press 'q' to quit: ");
+      choice = getchar();
+      while(getchar() != '\n');
+      if(choice == 'q' || choice == 'Q') return 0;
+      else return 0;
 
     }
     else if(strcmp(str, SIGNAL_ERROR) == 0){
@@ -453,12 +459,8 @@ int viewLog(int listen_fd){
       strcpy(error, str);
       return -1;
     }
-  printf("%s",str );
-  printf("Press 'q' to quit: ");
-  choice = getchar();
-  while(getchar() != '\n');
-  if(choice == 'q' || choice == 'Q') return 0;
-  else return 0;
+  // printf("%s",str );
+
 }
 
 /*
@@ -491,10 +493,11 @@ void drawTable(){
 Xử lí, điều khiển quân bằng w,a,s,d, ấn q thì thoát
 */
 int handleGame(int listen_fd){
-  char c, info[100], *str;
+  char c, infowin[100], infoquit[100],*str;
   setPrivateTerminal();
   error[0] = '\0';
-  info[0] = '\0';
+  infowin[0] = '\0';
+  infoquit[0]='\0';
 
   playerTurn = 1;
   col = 4;
@@ -527,9 +530,9 @@ int handleGame(int listen_fd){
       	}
       	else if(choice == 'y' || choice == 'Y'){
       	  error[0] = '\0';
-      	  if(info[0] == '\0')
+      	  if(infoquit[0] == '\0' && infowin[0] =='\0')
       	    playerTurn = 0;
-      	  else if(strcmp(strstr(info, INFO_WIN),INFO_WIN) == 0){
+      	  else if(strcmp(strstr(infowin, INFO_WIN),INFO_WIN) == 0){
       	    if(choice == 'y' || choice == 'Y'){
       	      if(viewLog(listen_fd) == 0){
             		sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
@@ -542,31 +545,22 @@ int handleGame(int listen_fd){
       	}
       	setPrivateTerminal();
       }
-      else if(info[0] != '\0'){
+      else if(infowin[0] != '\0'){
       	setNormalTerminal();
 
-      	printf("\033[0;37m%s\n", info);
+      	printf("\033[0;37m%s\n", infowin);
+        char info1[100];
       	printf("Your choice: ");
       	choice = getchar();
       	while(getchar() != '\n');
-      	if(choice == 'n' || choice == 'N'){
-      	  if(strcmp(info, INFO_QUIT) == 0 || strcmp(strstr(info, INFO_QUIT),INFO_QUIT) == 0)
-      	    info[0] = '\0';
-      	  else if(strcmp(strstr(info, INFO_WIN),INFO_WIN) == 0){
-      	    sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
-            client_send_to_server(listen_fd,send_msg);
-            client_recv_from_server(listen_fd,recv_msg);
-      	    return -1;
-      	  }
-      	}
-      	else if(choice == 'y' || choice == 'Y'){
-      	  if(strcmp(info, INFO_QUIT) == 0 || strcmp(strstr(info, INFO_QUIT),INFO_QUIT) == 0){
-      	    sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
-            client_send_to_server(listen_fd,send_msg);
-            client_recv_from_server(listen_fd,recv_msg);
-      	    return -1;
-      	  }
-      	  else if(strcmp(strstr(info, INFO_WIN),INFO_WIN) == 0){
+
+        if((choice == 'n' || choice == 'N') && strcmp(strstr(infowin, INFO_WIN),INFO_WIN) == 0){
+          sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
+          client_send_to_server(listen_fd,send_msg);
+          client_recv_from_server(listen_fd,recv_msg);
+          return -1;
+        }
+        else if((choice == 'y' || choice == 'Y') && strcmp(strstr(infowin, INFO_WIN),INFO_WIN) == 0){
       	    if(viewLog(listen_fd) == 0){
       	      sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
               client_send_to_server(listen_fd,send_msg);
@@ -574,7 +568,29 @@ int handleGame(int listen_fd){
       	      return -1;
       	    }
       	  }
+
+
+      	setPrivateTerminal();
+
+      }
+      else if(infoquit[0] != '\0'){
+      	setNormalTerminal();
+
+      	printf("\033[0;37m%s\n", infoquit);
+
+      	printf("Your choice: ");
+      	choice = getchar();
+      	while(getchar() != '\n');
+      	if((choice == 'n' || choice == 'N') && (strcmp(infoquit, INFO_QUIT) == 0 || strcmp(strstr(infoquit, INFO_QUIT),INFO_QUIT) == 0)){
+            infoquit[0] = '\0';
       	}
+        else if((choice == 'y' || choice == 'Y') && (strcmp(infoquit, INFO_QUIT) == 0 || strcmp(strstr(infoquit, INFO_QUIT),INFO_QUIT) == 0)){
+      	    sprintf(send_msg, "%s#%s#%s",SIGNAL_ABORTGAME, id, user);
+            client_send_to_server(listen_fd,send_msg);
+            client_recv_from_server(listen_fd,recv_msg);
+      	    return -1;
+      	}
+
 
       	setPrivateTerminal();
 
@@ -630,7 +646,7 @@ int handleGame(int listen_fd){
           playerTurn = 0;
           userVal = 9;
       	}
-      	else if(c == 'q') strcpy(info, INFO_QUIT);
+      	else if(c == 'q') strcpy(infoquit, INFO_QUIT);
       }
     }
     else {
@@ -643,9 +659,9 @@ int handleGame(int listen_fd){
           if(strcmp(str, SIGNAL_CHECK_FALSE) == 0){
               table[row * 9 + col] = ' ';
               firstPoint--;
-              char result[100];
-              sprintf(result,"You lose 1 point, you have %d points left! %s",firstPoint,INFO_QUIT);
-              strcpy(info,result);
+              char result1[100];
+              sprintf(result1,"You lose 1 point, you have %d points left! %s",firstPoint,INFO_QUIT);
+              strcpy(infoquit,result1);
 
 
           }
@@ -655,7 +671,7 @@ int handleGame(int listen_fd){
           str = strtok(NULL, token);
 
           sprintf(result,"Result: %s\n%s",str,INFO_WIN);
-          strcpy(info,result);
+          strcpy(infowin,result);
         }
       	else if(strcmp(str, SIGNAL_ERROR) == 0){
       	  str = strtok(NULL, token);
@@ -1207,8 +1223,12 @@ int main(int argc, char *argv[]) {
     fd_set readfds;
     fd_set writefds;
     fd_set exceptfds;
+    if(!argv[1]){
+      printf("%s\n","Server address is empty" );
+      exit(-1);
+    }
 
-    if(client_create_socket(&listen_fd) != 0) {
+    if(client_create_socket(&listen_fd,argv[1]) != 0) {
         perror("ERROR : socket creation failed");
         exit(0);
     }
@@ -1230,7 +1250,8 @@ int main(int argc, char *argv[]) {
 
 
 //Create a client socket
-int client_create_socket(int *listen_fd) {
+int client_create_socket(int *listen_fd,char* seraddr) {
+
     struct sockaddr_in server_addr;
 
     if((*listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -1240,7 +1261,7 @@ int client_create_socket(int *listen_fd) {
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SERVER_PORT);
-    server_addr.sin_addr.s_addr = inet_addr("172.16.0.20");
+    server_addr.sin_addr.s_addr = inet_addr(seraddr);
 
 
     if(0!=connect(*listen_fd,(struct sockaddr *)&server_addr,sizeof(struct sockaddr))) {
