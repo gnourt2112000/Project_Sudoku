@@ -20,4 +20,4 @@ Project Môn học thực hành lập trình mạng, được viết bằng C.
 2. Mở Terminal và gõ `make` để biên dịch chương trình.
 3. Mở 2 cửa sổ Terminal, 1 cửa sổ là server, 1 cửa sổ là client.
 4. Với Server gõ lệnh: `./server`
-4. Với Client gõ lệnh: `./client`
+4. Với Client gõ lệnh: `./client`+  `ip server`
